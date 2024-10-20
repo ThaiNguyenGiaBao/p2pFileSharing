@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "server": "npx ts-node src/server/server.ts",
+    "server": "nodemon src/server/server.ts",
     "peer1": "npx ts-node src/peer/peer1.ts",
     "peer2": "npx ts-node src/peer/peer2.ts"
   },
@@ -15,6 +15,7 @@
     "axios": "^1.7.7",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
+    "express-async-handler": "^1.2.0",
     "net": "^1.0.2",
     "pg": "^8.13.0",
     "socket.io": "^4.8.0",
