@@ -1,5 +1,7 @@
 import pool from "../database/initDb";
 import { Request, Response, NextFunction } from "express";
+import dotent from "dotenv";
+dotent.config();
 
 class FileController {
   // // Register a file
@@ -49,7 +51,8 @@ class FileController {
         );
 
         const fileId = newFile.rows[0].id;
-        const magnetLink = `magnet:?id:${fileId}&fn=${filename}`;
+        const serverUrl = process.env.SERVER_URL;
+        const magnetLink = `magnet:?id:${fileId}&fn=${filename}&tr=${serverUrl}`;
 
         // Update file with the magnet link
         const updateFile = await pool.query(
