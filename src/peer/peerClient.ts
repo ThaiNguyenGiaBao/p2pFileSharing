@@ -50,7 +50,8 @@ const downloadFile = async (filename: string) => {
 
         // Tải xuống từng piece từ các peer
         for (let pieceIndex = 0; pieceIndex < totalPieces; pieceIndex++) {
-            const peer = peers[pieceIndex % peers.length]; // Chọn peer ngẫu nhiên
+            // const peer = peers[pieceIndex % peers.length]; // Chọn peer ngẫu nhiên
+            const peer = peers[0]; // Chọn peer ngẫu nhiên
             downloadPieceFromPeer(peer, pieceIndex, filename);
         }
     } catch (err: unknown) {
