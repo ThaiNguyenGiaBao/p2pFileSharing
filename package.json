@@ -4,7 +4,7 @@
     "description": "",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "server": "nodemon src/server/server.ts",
+        "server": "nodemon src/tracker/tracker.ts",
         "peer": "npx ts-node src/peer/peer.ts"
     },
     "keywords": [],

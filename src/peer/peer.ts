@@ -17,7 +17,7 @@ const rl = readline.createInterface({
 });
 
 const peer: Peer = {
-    id: argv[2],
+    id: argv[2], // delete
     ip: 'localhost',
     port: parseInt(argv[3]),
 };

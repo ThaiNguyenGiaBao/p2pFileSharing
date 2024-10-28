@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
-import fileRouter from "./router/file.router";
+import fileRouter from "./router/torrentfile.router";
 import peerRouter from "./router/peer.router";
 import dotenv from "dotenv";
 dotenv.config();
