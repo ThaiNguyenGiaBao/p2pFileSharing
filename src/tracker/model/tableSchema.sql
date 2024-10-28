@@ -11,9 +11,10 @@ CREATE TABLE TorrentFile (
 
 -- Table for Pieces of a Torrent
 CREATE TABLE Piece (
-    hash VARCHAR(64) PRIMARY KEY,
+    hash VARCHAR(265) PRIMARY KEY,
     torrentId UUID NOT NULL,
-    size INT NOT NULL,
+    size BIGINT NOT NULL,
+    index INT NOT NULL,
     FOREIGN KEY (torrentId) REFERENCES TorrentFile(id)
 );
 
@@ -22,9 +23,9 @@ CREATE TABLE Peer (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     ip VARCHAR(45) NOT NULL,
     port INT NOT NULL,
-    status VARCHAR(50),
-    download BIGINT,
-    upload BIGINT
+    isOnline BOOLEAN DEFAULT FALSE,
+    download BIGINT DEFAULT 0,
+    upload BIGINT DEFAULT 0
 );
 
 -- Table for the relationship between Peers and Pieces
