@@ -8,6 +8,7 @@ import { createTorrentFile } from './createTorrentFile';
 import { checkFileExists } from './fileService';
 
 const registerPeer = async (peer: Peer) => {
+    console.log(peer);
     await axios
         .post(`${process.env.API_URL}/peer/register`, peer)
         .then((res) => {

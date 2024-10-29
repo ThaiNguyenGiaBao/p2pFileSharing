@@ -31,7 +31,7 @@ const file = {
 rl.on('line', async (input) => {
     const inputs = input.trim().split(' ');
     const command = inputs[0];
-    console.log(inputs.length);
+    console.log(command);
     switch (command) {
         case 'registerPeer': {
             registerPeer(peer);

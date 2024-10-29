@@ -1,13 +1,14 @@
 import fs from 'fs';
 import crypto from 'crypto';
 import path from 'path';
-import bencode from 'bencode/index.js';
+// import bencode from 'bencode/index.js';
+const bencode = require('bencode');
 
 // Hàm để tạo mã hash SHA-1 cho từng piece của tệp
-const createPieceHashes = (
+function createPieceHashes(
     filePath: string,
     pieceSize: number
-): Promise<string[]> => {
+): Promise<string[]> {
     return new Promise((resolve, reject) => {
         const hashes: string[] = [];
         const stream = fs.createReadStream(filePath, {
@@ -28,7 +29,7 @@ const createPieceHashes = (
             reject(err);
         });
     });
-};
+}
 
 const createTorrentFile = async (
     filePath: string,
