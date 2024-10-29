@@ -1,7 +1,7 @@
 import readline from 'readline';
 import net from 'net';
 import { Peer, File } from '../types';
-// import axios from 'axios';
+import axios from 'axios';
 import { argv } from 'process';
 import dotenv from 'dotenv';
 
@@ -18,9 +18,9 @@ const rl = readline.createInterface({
 });
 
 const peer: Peer = {
-    id: argv[2], // delete
+    id: 'cf11f5e4-3d6a-405c-b1c6-6d0a477b2e91',
     ip: 'localhost',
-    port: parseInt(argv[3]),
+    port: parseInt(argv[2]),
 };
 
 const file = {
@@ -48,6 +48,27 @@ rl.on('line', async (input) => {
             }
             break;
         }
+        case 'startPeer': {
+            await axios
+                .patch(`${process.env.API_URL}/peer/update`, {
+                    port: peer.port,
+                    ip: peer.ip,
+                    isOnline: true,
+                })
+                .then((res) => {
+                    console.log(res.data);
+                    peer.id = res.data.id;
+                })
+                .catch((error) => {
+                    if (error.response && error.response.status === 400) {
+                        // Kiểm tra nếu mã lỗi là 400
+                        console.error('Error:', error.response.data.message);
+                    } else {
+                        // Xử lý các lỗi khác
+                        console.error('Unexpected error:', error.message);
+                    }
+                });
+        }
         // case 'createTorrentFile': {
         //     if (inputs.length >= 4) {
         //         const filePath = inputs[1];
@@ -72,6 +93,24 @@ rl.on('line', async (input) => {
         }
 
         case 'exit': {
+            await axios
+                .patch(`${process.env.API_URL}/peer/update`, {
+                    port: peer.port,
+                    ip: peer.ip,
+                    isOnline: false,
+                })
+                .then((res) => {
+                    console.log(res.data);
+                })
+                .catch((error) => {
+                    if (error.response && error.response.status === 400) {
+                        // Kiểm tra nếu mã lỗi là 400
+                        console.error('Error:', error.response.data.message);
+                    } else {
+                        // Xử lý các lỗi khác
+                        console.error('Unexpected error:', error.message);
+                    }
+                });
             console.log('Closing readline...');
             rl.close(); // Đóng rl khi người dùng nhập 'exit'
             break;

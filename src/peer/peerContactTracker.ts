@@ -11,6 +11,7 @@ const registerPeer = async (peer: Peer) => {
         .post(`${process.env.API_URL}/peer/register`, peer)
         .then((res) => {
             console.log(res.data);
+            peer.id = res.data.id;
         })
         .catch((error) => {
             if (error.response && error.response.status === 400) {
@@ -28,9 +29,9 @@ const registerFile = async (peer: Peer, fileName: string, filePath: string) => {
         const isFileExist = await checkFileExists(filePath);
         let pieceSize = 512 * 1024;
         // src\peer\peer1\file\a.pdf
+        // file-sample_1MB
         if (isFileExist) {
             const fileSize = await getFileSize(filePath);
-            console.log(fileSize);
             await axios
                 .post(`${process.env.API_URL}/torrentfile/register`, {
                     filename: fileName,
@@ -40,18 +41,21 @@ const registerFile = async (peer: Peer, fileName: string, filePath: string) => {
                 .then(async (res) => {
                     const { hashes, sizes } = await createPieceHashes(
                         filePath,
-                        fileSize
+                        pieceSize
                     );
+                    console.log(hashes, sizes);
                     for (let i = 0; i < hashes.length; i++) {
+                        console.log(peer.id);
                         await axios
                             .post(`${process.env.API_URL}/piece/register`, {
                                 hash: hashes[i],
-                                torrentFileId: res.data.torrentFileId,
+                                torrentFileId: res.data.id,
                                 size: sizes[i],
                                 index: i,
                                 peerId: peer.id,
                             })
                             .then((res) => {});
+                        console.log(i);
                     }
                 })
                 .catch((error) => {
