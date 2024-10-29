@@ -3,8 +3,8 @@ import readline from 'readline';
 import dotenv from 'dotenv';
 import { Peer, File } from '../types';
 
-import { createTorrentFile } from './createTorrentFile';
-import { checkFileExists } from './fileService';
+import { createPieceHashes } from './createPieceHashes';
+import { checkFileExists, getFileSize } from './fileService';
 dotenv.config();
 const registerPeer = async (peer: Peer) => {
     await axios
@@ -23,31 +23,45 @@ const registerPeer = async (peer: Peer) => {
         });
 };
 // Đăng kí file với tracker
-const registerFile = async (
-    peer: Peer,
-    rl: readline.Interface,
-    fileName: string,
-    filePath: string
-) => {
+const registerFile = async (peer: Peer, fileName: string, filePath: string) => {
     try {
         const isFileExist = await checkFileExists(filePath);
-
+        let pieceSize = 512 * 1024;
+        // src\peer\peer1\file\a.pdf
         if (isFileExist) {
-            const file: File = {
-                name: fileName,
-                size: 1024,
-            };
-
+            const fileSize = await getFileSize(filePath);
+            console.log(fileSize);
             await axios
-                .post(`${process.env.API_URL}/file/register`, {
-                    file,
-                    peer,
+                .post(`${process.env.API_URL}/torrentfile/register`, {
+                    filename: fileName,
+                    size: fileSize,
+                    pieceSize,
                 })
-                .then((res) => {
-                    console.log(res.data);
+                .then(async (res) => {
+                    const { hashes, sizes } = await createPieceHashes(
+                        filePath,
+                        fileSize
+                    );
+                    for (let i = 0; i < hashes.length; i++) {
+                        await axios
+                            .post(`${process.env.API_URL}/piece/register`, {
+                                hash: hashes[i],
+                                torrentFileId: res.data.torrentFileId,
+                                size: sizes[i],
+                                index: i,
+                                peerId: peer.id,
+                            })
+                            .then((res) => {});
+                    }
                 })
-                .catch((err) => {
-                    console.error(err.message);
+                .catch((error) => {
+                    if (error.response && error.response.status === 400) {
+                        // Kiểm tra nếu mã lỗi là 400
+                        console.error('Error:', error.response.data.message); // Sẽ hiển thị "Peer already registered"
+                    } else {
+                        // Xử lý các lỗi khác
+                        console.error('Unexpected error:', error.message);
+                    }
                 });
         } else {
             console.log('File is not exist');

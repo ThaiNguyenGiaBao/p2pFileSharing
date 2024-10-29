@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 import { createPeerServer } from './peerServer';
 import { downloadFile } from './peerClient';
 import { registerPeer, registerFile } from './peerContactTracker';
-import { createTorrentFile } from './createTorrentFile';
+// import { createTorrentFile } from './createPieceHashes';
 // import { getFileInfo, checkFileExists } from './fileService';
 dotenv.config();
 const trackerUrl: string = process.env.TRACKER_URL ?? 'http://localhost:8000';
@@ -31,7 +31,6 @@ const file = {
 rl.on('line', async (input) => {
     const inputs = input.trim().split(' ');
     const command = inputs[0];
-    console.log(command);
     switch (command) {
         case 'registerPeer': {
             registerPeer(peer);
@@ -43,23 +42,23 @@ rl.on('line', async (input) => {
             if (inputs.length === 3) {
                 const filePath = inputs[1];
                 const fileName = inputs[2];
-                registerFile(peer, rl, fileName, filePath);
+                registerFile(peer, fileName, filePath);
             } else {
                 console.log('Miss value');
             }
             break;
         }
-        case 'createTorrentFile': {
-            if (inputs.length >= 4) {
-                const filePath = inputs[1];
-                const fileName = inputs[2];
-                const torrentPath = inputs[3];
-                createTorrentFile(filePath, fileName, trackerUrl, torrentPath);
-            } else {
-                console.log('Miss value');
-            }
-            break;
-        }
+        // case 'createTorrentFile': {
+        //     if (inputs.length >= 4) {
+        //         const filePath = inputs[1];
+        //         const fileName = inputs[2];
+        //         const torrentPath = inputs[3];
+        //         createTorrentFile(filePath, fileName, trackerUrl, torrentPath);
+        //     } else {
+        //         console.log('Miss value');
+        //     }
+        //     break;
+        // }
         case 'downloadFile': {
             if (inputs.length === 2) {
                 const fileName = inputs[1];
