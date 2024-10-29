@@ -9,7 +9,7 @@ class PeerController {
   ): Promise<void> {
     const { ip, port } = req.body;
     if (!ip || !port) {
-      res.status(400).json({message:"Add ip and port"});
+      res.status(400).json({ message: "Add ip and port" });
       return;
     }
 
@@ -19,7 +19,7 @@ class PeerController {
         [ip, port]
       );
       if (peer.rows.length != 0) {
-        res.status(400).json({message:"Peer already registered"});
+        res.status(400).json({ message: "Peer already registered" });
         return;
       }
 
@@ -29,6 +29,30 @@ class PeerController {
       );
       console.log("Peer registered::", newPeer.rows[0]);
       res.status(201).json(newPeer.rows[0]);
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).send(err.message);
+    }
+  }
+  static async getMe(req: Request, res: Response, next: NextFunction) {
+    const ip = req.query.ip as string;
+    const port = req.query.port as string;
+    if (!ip || !port) {
+      res.status(400).json({ message: "Add ip and port" });
+      return;
+    }
+
+    try {
+      const peer = await pool.query(
+        "SELECT * FROM peer WHERE ip = $1 AND port = $2",
+        [ip, port]
+      );
+      if (peer.rows.length == 0) {
+        res.status(400).json({ message: "Peer not found" });
+        return;
+      }
+
+      res.status(200).json(peer.rows[0]);
     } catch (err: any) {
       console.error(err);
       res.status(500).send(err.message);
@@ -50,7 +74,7 @@ class PeerController {
         peerId,
       ]);
       if (peer.rows.length == 0) {
-       res.status(400).json({message:"Peer not found"});
+        res.status(400).json({ message: "Peer not found" });
         return;
       }
 
@@ -69,6 +93,75 @@ class PeerController {
     try {
       const peers = await pool.query("SELECT id, ip, port FROM peer");
       res.status(200).json(peers.rows);
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).send(err.message);
+    }
+  }
+
+  static async delete(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
+    const peerId = req.params.peerId;
+    if (!peerId) {
+      res.status(400).send("Add peerId");
+      return;
+    }
+
+    try {
+      const peer = await pool.query("DELETE FROM peer WHERE id = $1", [peerId]);
+      if (peer.rowCount == 0) {
+        res.status(400).json({ message: "Peer not found" });
+        return;
+      }
+
+      res.status(200).json({ message: "Peer deleted" });
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).send(err.message);
+    }
+  }
+
+  static async update(req: Request, res: Response, next: NextFunction) {
+    const { id, ip, port, isOnline, upload, download } = req.body;
+    if (!id) {
+      res.status(400).send({ message: "Add id" });
+      return;
+    }
+
+    // Only update the fields that not null
+    const values = [];
+    if (ip) {
+      values.push(`ip = '${ip}'`);
+    }
+    if (port) {
+      values.push(`port = ${port}`);
+    }
+    if (isOnline != null) {
+      values.push(`isOnline = ${isOnline}`);
+    }
+    if (upload != null) {
+      values.push(`upload = ${upload}`);
+    }
+    if (download != null) {
+      values.push(`download = ${download}`);
+    }
+
+    try {
+      const peer = await pool.query(
+        `UPDATE peer SET ${values.join(", ")} WHERE id = $1 RETURNING *`,
+        [id]
+      );
+      if (peer.rows.length == 0) {
+        res.status(400).json({ message: "Peer not found" });
+        return;
+      }
+
+      console.log("Peer updated::", peer.rows[0]);
+
+      res.status(200).json(peer.rows[0]);
     } catch (err: any) {
       console.error(err);
       res.status(500).send(err.message);
