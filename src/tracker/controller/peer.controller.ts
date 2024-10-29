@@ -125,20 +125,10 @@ class PeerController {
   }
 
   static async update(req: Request, res: Response, next: NextFunction) {
-    const { id, ip, port, isOnline, upload, download } = req.body;
-    if (!id) {
-      res.status(400).send({ message: "Add id" });
-      return;
-    }
+    const { ip, port, isOnline, upload, download } = req.body;
 
     // Only update the fields that not null
     const values = [];
-    if (ip) {
-      values.push(`ip = '${ip}'`);
-    }
-    if (port) {
-      values.push(`port = ${port}`);
-    }
     if (isOnline != null) {
       values.push(`isOnline = ${isOnline}`);
     }
@@ -149,10 +139,13 @@ class PeerController {
       values.push(`download = ${download}`);
     }
 
+    console.log("Values::", values.join(", "));
     try {
       const peer = await pool.query(
-        `UPDATE peer SET ${values.join(", ")} WHERE id = $1 RETURNING *`,
-        [id]
+        `UPDATE peer SET ${values.join(
+          ", "
+        )} WHERE port = $1 AND ip = $2 RETURNING *`,
+        [port, ip]
       );
       if (peer.rows.length == 0) {
         res.status(400).json({ message: "Peer not found" });
