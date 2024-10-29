@@ -4,7 +4,7 @@
     "description": "��#\u0000 \u0000p\u00002\u0000p\u0000F\u0000i\u0000l\u0000e\u0000S\u0000h\u0000a\u0000r\u0000i\u0000n\u0000g\u0000\r\u0000 \u0000",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "server": "nodemon src/server/server.ts",
+        "tracker": "nodemon src/tracker/tracker.ts",
         "peer": "npx ts-node src/peer/peer.ts"
     },
     "keywords": [],
