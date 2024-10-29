@@ -50,11 +50,10 @@ rl.on('line', async (input) => {
             break;
         }
         case 'createTorrentFile': {
-            if (inputs.length >= 4) {
+            if (inputs.length >= 3) {
                 const filePath = inputs[1];
                 const fileName = inputs[2];
-                const torrentPath = inputs[3];
-                createTorrentFile(filePath, fileName, trackerUrl, torrentPath);
+                createTorrentFile(filePath, fileName, trackerUrl);
             } else {
                 console.log('Miss value');
             }

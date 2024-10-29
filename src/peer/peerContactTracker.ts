@@ -1,21 +1,25 @@
 import axios from 'axios';
 import readline from 'readline';
-import net from 'net';
-import crypto from 'crypto';
+import dotenv from 'dotenv';
 import { Peer, File } from '../types';
 
 import { createTorrentFile } from './createTorrentFile';
 import { checkFileExists } from './fileService';
-
+dotenv.config();
 const registerPeer = async (peer: Peer) => {
-    console.log(peer);
     await axios
         .post(`${process.env.API_URL}/peer/register`, peer)
         .then((res) => {
             console.log(res.data);
         })
-        .catch((err) => {
-            console.error(err.message);
+        .catch((error) => {
+            if (error.response && error.response.status === 400) {
+                // Kiểm tra nếu mã lỗi là 400
+                console.error('Error:', error.response.data.message); // Sẽ hiển thị "Peer already registered"
+            } else {
+                // Xử lý các lỗi khác
+                console.error('Unexpected error:', error.message);
+            }
         });
 };
 // Đăng kí file với tracker

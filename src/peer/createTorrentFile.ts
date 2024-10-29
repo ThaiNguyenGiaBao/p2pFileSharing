@@ -34,7 +34,6 @@ function createPieceHashes(
 const createTorrentFile = async (
     filePath: string,
     name: string,
-    trackerUrl: string,
     outputDir: string,
     pieceSize: number = 512 * 1024
 ): Promise<void> => {
@@ -54,7 +53,6 @@ const createTorrentFile = async (
             length: fileStats.size, // Kích thước file
             pieceLength: pieceSize, // Kích thước mỗi mảnh
             pieces: Buffer.concat(pieceBuffers), // Kết hợp các hash mảnh thành buffer
-            announce: trackerUrl, // Địa chỉ tracker
         };
 
         // Ghi dữ liệu vào file .torrent
