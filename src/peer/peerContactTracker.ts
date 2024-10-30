@@ -1,7 +1,6 @@
 import axios from 'axios';
 import readline from 'readline';
 import dotenv from 'dotenv';
-import dotenv from 'dotenv';
 import { Peer, File } from '../types';
 
 import { createPieceHashes } from './createPieceHashes';
@@ -15,14 +14,6 @@ const registerPeer = async (peer: Peer) => {
             console.log(res.data);
             peer.id = res.data.id;
         })
-        .catch((error) => {
-            if (error.response && error.response.status === 400) {
-                // Kiểm tra nếu mã lỗi là 400
-                console.error('Error:', error.response.data.message); // Sẽ hiển thị "Peer already registered"
-            } else {
-                // Xử lý các lỗi khác
-                console.error('Unexpected error:', error.message);
-            }
         .catch((error) => {
             if (error.response && error.response.status === 400) {
                 // Kiểm tra nếu mã lỗi là 400
