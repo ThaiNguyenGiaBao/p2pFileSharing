@@ -5,6 +5,7 @@ import { Peer, File } from '../types';
 
 import { createPieceHashes } from './createPieceHashes';
 import { checkFileExists, getFileSize } from './fileService';
+import { loadFilePieces } from './filePiecesManager';
 dotenv.config();
 const registerPeer = async (peer: Peer) => {
     await axios
@@ -26,12 +27,14 @@ const registerPeer = async (peer: Peer) => {
 // Đăng kí file với tracker
 const registerFile = async (peer: Peer, fileName: string, filePath: string) => {
     try {
+        filePath = `${process.env.FILE_PATH}/${filePath}/${fileName}`;
         const isFileExist = await checkFileExists(filePath);
-        let pieceSize = 512 * 1024;
-        // src\peer\peer1\file\a.pdf
-        // file-sample_1MB
+        const pieceSize = 512 * 1024;
+
         if (isFileExist) {
             const fileSize = await getFileSize(filePath);
+            // Chia file thành các phần (pieces) và lưu vào filePiecesMap
+            await loadFilePieces(fileName, filePath, pieceSize);
             await axios
                 .post(`${process.env.API_URL}/torrentfile/register`, {
                     filename: fileName,
@@ -43,35 +46,32 @@ const registerFile = async (peer: Peer, fileName: string, filePath: string) => {
                         filePath,
                         pieceSize
                     );
-                    console.log(hashes, sizes);
+
                     for (let i = 0; i < hashes.length; i++) {
-                        console.log(peer.id);
-                        await axios
-                            .post(`${process.env.API_URL}/piece/register`, {
+                        await axios.post(
+                            `${process.env.API_URL}/piece/register`,
+                            {
                                 hash: hashes[i],
                                 torrentFileId: res.data.id,
                                 size: sizes[i],
                                 index: i,
                                 peerId: peer.id,
-                            })
-                            .then((res) => {});
-                        console.log(i);
+                            }
+                        );
                     }
                 })
                 .catch((error) => {
                     if (error.response && error.response.status === 400) {
-                        // Kiểm tra nếu mã lỗi là 400
-                        console.error('Error:', error.response.data.message); // Sẽ hiển thị "Peer already registered"
+                        console.error('Error:', error.response.data.message);
                     } else {
-                        // Xử lý các lỗi khác
                         console.error('Unexpected error:', error.message);
                     }
                 });
         } else {
-            console.log('File is not exist');
+            console.log('File does not exist');
         }
     } catch (e) {
-        console.log(e);
+        console.error('Error registering file:', e);
     }
 };
 

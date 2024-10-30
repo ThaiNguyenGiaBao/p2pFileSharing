@@ -18,15 +18,18 @@ const rl = readline.createInterface({
 });
 
 const peer: Peer = {
-    id: 'cf11f5e4-3d6a-405c-b1c6-6d0a477b2e91',
+    id: '',
     ip: 'localhost',
     port: parseInt(argv[2]),
+    download: 0,
+    upload: 0,
 };
 
 const file = {
     name: 'test1',
     size: 100,
 };
+// Lưu trữ các phần tệp dựa trên ID hoặc tên tệp
 
 rl.on('line', async (input) => {
     const inputs = input.trim().split(' ');
@@ -58,6 +61,8 @@ rl.on('line', async (input) => {
                 .then((res) => {
                     console.log(res.data);
                     peer.id = res.data.id;
+                    peer.upload = res.data.upload;
+                    peer.download = res.data.download;
                 })
                 .catch((error) => {
                     if (error.response && error.response.status === 400) {
@@ -81,9 +86,10 @@ rl.on('line', async (input) => {
         //     break;
         // }
         case 'downloadFile': {
-            if (inputs.length === 2) {
-                const fileName = inputs[1];
-                downloadFile(fileName);
+            if (inputs.length === 3) {
+                const filePath = inputs[1];
+                const fileName = inputs[2];
+                downloadFile(fileName, filePath);
             }
             break;
         }
@@ -125,7 +131,3 @@ rl.on('line', async (input) => {
 // Create peerServer
 
 const server = createPeerServer(peer.port, rl);
-
-server.listen(peer.port, () => {
-    console.log('Server listening on port', peer.port);
-});

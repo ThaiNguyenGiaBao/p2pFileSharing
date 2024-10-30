@@ -1,12 +1,16 @@
 import net from 'net';
 import fs from 'fs';
 import axios from 'axios';
-import { Peer, File } from '../types';
-// Hàm tải xuống tệp từ một peer
-const downloadPieceFromPeer = (
+import path from 'path';
+import { Peer } from '../types';
+import { setFilePieces, updateFilePiece } from './filePiecesManager'; // Import các hàm cần thiết
+
+// Hàm tải xuống một phần (piece) của tệp từ một peer
+const downloadPieceFromPeer = async (
     peer: Peer,
     pieceIndex: number,
-    filename: string
+    filename: string,
+    filePath: string
 ) => {
     const client = net.createConnection(
         { port: peer.port, host: peer.ip },
@@ -16,14 +20,20 @@ const downloadPieceFromPeer = (
             );
 
             // Yêu cầu peer gửi phần của tệp
-            client.write(JSON.stringify({ action: 'download', pieceIndex }));
+            client.write(
+                JSON.stringify({ action: 'download', pieceIndex, filename })
+            );
 
             client.on('data', (data) => {
                 // Lưu phần tải xuống vào tệp
-                fs.appendFileSync(filename, data);
+                fs.appendFileSync(filePath, data, { flag: 'a' });
                 console.log(
-                    `Downloaded piece ${pieceIndex} from peer ${peer.id}`
+                    `Downloaded piece ${pieceIndex} from peer ${peer.port}`
                 );
+
+                // Cập nhật filePiecesManager sau khi tải xuống thành công
+                updateFilePiece(filename, pieceIndex, data); // Cập nhật danh sách các phần
+
                 client.end();
             });
         }
@@ -35,24 +45,57 @@ const downloadPieceFromPeer = (
 };
 
 // Hàm bắt đầu tải xuống tệp
-const downloadFile = async (filename: string) => {
+const downloadFile = async (filename: string, port: string) => {
     try {
+        // filePath = `${process.env.FILE_PATH}/${filePath}/${filename}`;
+        const validFilePath = process.env.FILE_PATH ?? 'src/peer';
+        const filePath = path.join(validFilePath, port, filename);
+        // const dir = path.dirname(filePath);
+
+        // Tạo tệp trống nếu chưa tồn tại
+        if (!fs.existsSync(filePath)) {
+            fs.writeFileSync(filePath, ''); // Tạo tệp trống
+        }
+
         // Yêu cầu danh sách các peer có tệp
-        const response = await axios.get(
-            `http://tracker-server.com/file/${filename}`
+        const torrentFileResponse = await axios.get(
+            `${process.env.API_URL}/torrentfile/${filename}`
         );
-        const peers = response.data.peers;
+        const torrentFile = torrentFileResponse.data;
+        // Lấy danh sách các phần (pieces) của tệp
+        const pieceListResponse = await axios.get(
+            `${process.env.API_URL}/piece/${torrentFile.id}`
+        );
+        const pieces = pieceListResponse.data;
 
-        console.log(`Found ${peers.length} peers with the file.`);
+        console.log(`Found ${pieces.length} pieces for the file ${filename}.`);
+        // Tải xuống từng phần của tệp từ các peer
+        for (let pieceIndex = 0; pieceIndex < pieces.length; pieceIndex++) {
+            const piece = pieces[pieceIndex];
+            const peersResponse = await axios.get(
+                `${process.env.API_URL}/piece/peer/${piece.hash}`
+            );
 
-        // Giả sử tệp có 10 pieces
-        const totalPieces = 10;
-
-        // Tải xuống từng piece từ các peer
-        for (let pieceIndex = 0; pieceIndex < totalPieces; pieceIndex++) {
-            // const peer = peers[pieceIndex % peers.length]; // Chọn peer ngẫu nhiên
-            const peer = peers[0]; // Chọn peer ngẫu nhiên
-            downloadPieceFromPeer(peer, pieceIndex, filename);
+            const peers: Peer[] = peersResponse.data;
+            console.log(peers);
+            // Kiểm tra nếu có peer sẵn sàng cung cấp phần dữ liệu
+            if (peers.length > 0) {
+                let index = 0;
+                for (let i = 0; i < peers.length; i++) {
+                    if (peers[i].upload < peers[index].upload) {
+                        index = i;
+                    }
+                }
+                const peer = peers[index];
+                await downloadPieceFromPeer(
+                    peer,
+                    pieceIndex,
+                    filename,
+                    filePath
+                ); // Sử dụng await để đảm bảo thứ tự
+            } else {
+                console.log(`No peer found for piece ${pieceIndex}`);
+            }
         }
     } catch (err: unknown) {
         if (isError(err)) {
