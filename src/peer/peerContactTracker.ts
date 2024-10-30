@@ -1,50 +1,57 @@
 import axios from 'axios';
 import readline from 'readline';
-import net from 'net';
-import crypto from 'crypto';
+import dotenv from 'dotenv';
 import { Peer, File } from '../types';
 
-import { createMagnetLink } from './createMagnetLink';
-import { getFileInfo } from './fileService';
-
+import { createTorrentFile } from './createTorrentFile';
+import { checkFileExists } from './fileService';
+dotenv.config();
 const registerPeer = async (peer: Peer) => {
     await axios
         .post(`${process.env.API_URL}/peer/register`, peer)
         .then((res) => {
             console.log(res.data);
         })
-        .catch((err) => {
-            console.error(err.message);
+        .catch((error) => {
+            if (error.response && error.response.status === 400) {
+                // Kiểm tra nếu mã lỗi là 400
+                console.error('Error:', error.response.data.message); // Sẽ hiển thị "Peer already registered"
+            } else {
+                // Xử lý các lỗi khác
+                console.error('Unexpected error:', error.message);
+            }
         });
 };
 // Đăng kí file với tracker
-const registerFile = async (peer: Peer, rl: readline.Interface) => {
+const registerFile = async (
+    peer: Peer,
+    rl: readline.Interface,
+    fileName: string,
+    filePath: string
+) => {
     try {
-        const { filePath, fileName } = await getFileInfo(rl);
+        const isFileExist = await checkFileExists(filePath);
 
-        const file: File = {
-            name: fileName,
-            size: 1024,
-        };
+        if (isFileExist) {
+            const file: File = {
+                name: fileName,
+                size: 1024,
+            };
 
-        const magnetLink = await createMagnetLink(
-            filePath,
-            fileName,
-            512 * 1024
-        );
-
-        await axios
-            .post(`${process.env.API_URL}/file/register`, {
-                file,
-                peer,
-                magnetLink,
-            })
-            .then((res) => {
-                console.log(res.data);
-            })
-            .catch((err) => {
-                console.error(err.message);
-            });
+            await axios
+                .post(`${process.env.API_URL}/file/register`, {
+                    file,
+                    peer,
+                })
+                .then((res) => {
+                    console.log(res.data);
+                })
+                .catch((err) => {
+                    console.error(err.message);
+                });
+        } else {
+            console.log('File is not exist');
+        }
     } catch (e) {
         console.log(e);
     }
