@@ -33,7 +33,7 @@ const registerFile = async (peer: Peer, fileName: string, filePath: string) => {
 
         if (isFileExist) {
             const fileSize = await getFileSize(filePath);
-            // Chia file thành các phần (pieces) và lưu vào filePiecesMap
+            // Chia file thành các phần (pieces) và lưu vào
             await loadFilePieces(fileName, filePath, pieceSize);
             await axios
                 .post(`${process.env.API_URL}/torrentfile/register`, {

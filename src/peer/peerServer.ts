@@ -1,15 +1,17 @@
 import net from 'net';
 import readline from 'readline';
-import { getFilePieces } from './filePiecesManager'; // Import hàm lấy các phần từ filePiecesManager
-import { Peer } from '../types';
+import fs from 'fs/promises'; // Đảm bảo đã import fs/promises
+import path from 'path'; // Import path module
+import { Peer } from '../types'; // Import kiểu dữ liệu Peer
 import axios from 'axios';
+
 // Hàm tạo server peer
 export const createPeerServer = (
     port: number,
     rl: readline.Interface,
     PEER: Peer
 ) => {
-    const server = net.createServer((socket) => {
+    const server = net.createServer((socket: net.Socket) => {
         console.log(
             'Client connected: ' +
                 socket.remoteAddress +
@@ -17,10 +19,9 @@ export const createPeerServer = (
                 socket.remotePort
         );
 
-        socket.on('data', async (data) => {
+        socket.on('data', async (data: Buffer) => {
             try {
                 const message = JSON.parse(data.toString().trim());
-
                 if (
                     message.action === 'download' &&
                     typeof message.pieceIndex === 'number' &&
@@ -29,25 +30,27 @@ export const createPeerServer = (
                     const index = message.pieceIndex;
                     const filename = message.filename;
 
-                    // Lấy các phần của tệp từ filePiecesManager
-                    const filePieces = getFilePieces(filename);
+                    // Extract the filename without the domain and extension
+                    const extractedFilename = path.basename(
+                        filename,
+                        path.extname(filename)
+                    );
 
-                    // Kiểm tra xem filePieces có tồn tại không
-                    if (!filePieces) {
-                        console.log('hehe');
-                        socket.write('ERROR: No pieces found for this file');
-                    } else if (index < 0 || index >= filePieces.length) {
-                        // Kiểm tra xem chỉ số có nằm trong phạm vi không
-                        socket.write('ERROR: Invalid piece index');
-                    } else {
+                    // Xác định đường dẫn đến file piece
+                    const pieceFilePath = `${process.env.FILE_PATH}/${PEER.port}/${extractedFilename}/piece_${index}.bin`; // Tạo đường dẫn đến file piece
+
+                    try {
+                        // Đọc phần dữ liệu từ file
+                        const pieceData = await fs.readFile(pieceFilePath);
+
                         // Gửi phần dữ liệu (piece) cho client
-                        socket.write(filePieces[index]);
+                        socket.write(pieceData);
                         console.log(
                             `Sent piece ${index} of file ${filename} to client.`
                         );
+
                         PEER.upload = Number(PEER.upload) + 1;
 
-                        console.log(PEER.upload);
                         await axios
                             .patch(`${process.env.API_URL}/peer/update`, {
                                 port: PEER.port,
@@ -59,19 +62,30 @@ export const createPeerServer = (
                                     error.response &&
                                     error.response.status === 400
                                 ) {
-                                    // Kiểm tra nếu mã lỗi là 400
                                     console.error(
                                         'Error:',
                                         error.response.data.message
                                     );
                                 } else {
-                                    // Xử lý các lỗi khác
                                     console.error(
                                         'Unexpected error:',
                                         error.message
                                     );
                                 }
                             });
+                    } catch (fileError: unknown) {
+                        // Kiểm tra kiểu lỗi và lấy thông tin
+                        if (fileError instanceof Error) {
+                            console.error(
+                                'Error reading piece file:',
+                                fileError.message
+                            );
+                        } else {
+                            console.error(
+                                'Error reading piece file: Unknown error'
+                            );
+                        }
+                        socket.write('ERROR: Failed to read piece file');
                     }
                 } else {
                     console.log('Received unknown command:', message);
@@ -81,7 +95,7 @@ export const createPeerServer = (
             }
         });
 
-        rl.on('line', (input) => {
+        rl.on('line', (input: string) => {
             socket.write(input);
         });
     });

@@ -3,7 +3,7 @@ import fs from 'fs';
 import axios from 'axios';
 import path from 'path';
 import { Peer } from '../types';
-import { setFilePieces, updateFilePiece } from './filePiecesManager'; // Import các hàm cần thiết
+import { saveFilePiece } from './filePiecesManager'; // Import các hàm cần thiết
 
 // Hàm tải xuống một phần (piece) của tệp từ một peer
 const downloadPieceFromPeer = async (
@@ -38,7 +38,7 @@ const downloadPieceFromPeer = async (
                         console.log(
                             `Downloaded piece ${pieceIndex} from peer ${peer.port}`
                         );
-                        updateFilePiece(filename, pieceIndex, data); // Cập nhật danh sách các phần
+                        saveFilePiece(filePath, pieceIndex, data); // Cập nhật danh sách các phần
                     }
 
                     // Trả về true khi tải xuống thành công
