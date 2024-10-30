@@ -89,7 +89,7 @@ rl.on('line', async (input) => {
             if (inputs.length === 3) {
                 const filePath = inputs[1];
                 const fileName = inputs[2];
-                downloadFile(fileName, filePath);
+                downloadFile(fileName, filePath, peer);
             }
             break;
         }
@@ -104,9 +104,6 @@ rl.on('line', async (input) => {
                     port: peer.port,
                     ip: peer.ip,
                     isOnline: false,
-                })
-                .then((res) => {
-                    console.log(res.data);
                 })
                 .catch((error) => {
                     if (error.response && error.response.status === 400) {
@@ -130,4 +127,4 @@ rl.on('line', async (input) => {
 
 // Create peerServer
 
-const server = createPeerServer(peer.port, rl);
+const server = createPeerServer(peer.port, rl, peer);

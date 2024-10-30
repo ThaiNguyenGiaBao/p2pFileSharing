@@ -1,9 +1,14 @@
 import net from 'net';
 import readline from 'readline';
 import { getFilePieces } from './filePiecesManager'; // Import hàm lấy các phần từ filePiecesManager
-
+import { Peer } from '../types';
+import axios from 'axios';
 // Hàm tạo server peer
-export const createPeerServer = (port: number, rl: readline.Interface) => {
+export const createPeerServer = (
+    port: number,
+    rl: readline.Interface,
+    PEER: Peer
+) => {
     const server = net.createServer((socket) => {
         console.log(
             'Client connected: ' +
@@ -12,7 +17,7 @@ export const createPeerServer = (port: number, rl: readline.Interface) => {
                 socket.remotePort
         );
 
-        socket.on('data', (data) => {
+        socket.on('data', async (data) => {
             try {
                 const message = JSON.parse(data.toString().trim());
 
@@ -29,6 +34,7 @@ export const createPeerServer = (port: number, rl: readline.Interface) => {
 
                     // Kiểm tra xem filePieces có tồn tại không
                     if (!filePieces) {
+                        console.log('hehe');
                         socket.write('ERROR: No pieces found for this file');
                     } else if (index < 0 || index >= filePieces.length) {
                         // Kiểm tra xem chỉ số có nằm trong phạm vi không
@@ -39,6 +45,33 @@ export const createPeerServer = (port: number, rl: readline.Interface) => {
                         console.log(
                             `Sent piece ${index} of file ${filename} to client.`
                         );
+                        PEER.upload = Number(PEER.upload) + 1;
+
+                        console.log(PEER.upload);
+                        await axios
+                            .patch(`${process.env.API_URL}/peer/update`, {
+                                port: PEER.port,
+                                ip: PEER.ip,
+                                upload: PEER.upload,
+                            })
+                            .catch((error) => {
+                                if (
+                                    error.response &&
+                                    error.response.status === 400
+                                ) {
+                                    // Kiểm tra nếu mã lỗi là 400
+                                    console.error(
+                                        'Error:',
+                                        error.response.data.message
+                                    );
+                                } else {
+                                    // Xử lý các lỗi khác
+                                    console.error(
+                                        'Unexpected error:',
+                                        error.message
+                                    );
+                                }
+                            });
                     }
                 } else {
                     console.log('Received unknown command:', message);
