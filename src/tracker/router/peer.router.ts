@@ -1,6 +1,6 @@
-import { Router } from "express";
-import PeerController from "../controller/peer.controller";
-import asyncHandler from "express-async-handler";
+import { Router } from 'express';
+import PeerController from '../controller/peer.controller';
+import asyncHandler from 'express-async-handler';
 
 const router = Router();
 
