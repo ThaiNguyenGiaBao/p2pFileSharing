@@ -5,6 +5,8 @@ export interface Peer {
     id: string;
     ip: string;
     port: number;
+    download: number;
+    upload: number;
 }
 
 // Định nghĩa kiểu dữ liệu cho File

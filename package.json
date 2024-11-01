@@ -5,7 +5,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "tracker": "nodemon src/tracker/tracker.ts",
-        "peer": "npx ts-node src/peer/peer.ts"
+        "peer": "nodemon --exec ts-node src/peer/peer.ts"
     },
     "keywords": [],
     "author": "",

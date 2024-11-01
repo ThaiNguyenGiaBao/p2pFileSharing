@@ -3,14 +3,16 @@ import readline from 'readline';
 import dotenv from 'dotenv';
 import { Peer, File } from '../types';
 
-import { createTorrentFile } from './createTorrentFile';
-import { checkFileExists } from './fileService';
+import { createPieceHashes } from './createPieceHashes';
+import { checkFileExists, getFileSize } from './fileService';
+import { loadFilePieces } from './filePiecesManager';
 dotenv.config();
 const registerPeer = async (peer: Peer) => {
     await axios
         .post(`${process.env.API_URL}/peer/register`, peer)
         .then((res) => {
             console.log(res.data);
+            peer.id = res.data.id;
         })
         .catch((error) => {
             if (error.response && error.response.status === 400) {
@@ -23,37 +25,53 @@ const registerPeer = async (peer: Peer) => {
         });
 };
 // Đăng kí file với tracker
-const registerFile = async (
-    peer: Peer,
-    rl: readline.Interface,
-    fileName: string,
-    filePath: string
-) => {
+const registerFile = async (peer: Peer, fileName: string, filePath: string) => {
     try {
+        filePath = `${process.env.FILE_PATH}/${filePath}/${fileName}`;
         const isFileExist = await checkFileExists(filePath);
+        const pieceSize = 512 * 1024;
 
         if (isFileExist) {
-            const file: File = {
-                name: fileName,
-                size: 1024,
-            };
-
+            const fileSize = await getFileSize(filePath);
+            // Chia file thành các phần (pieces) và lưu vào
+            await loadFilePieces(fileName, filePath, pieceSize);
             await axios
-                .post(`${process.env.API_URL}/file/register`, {
-                    file,
-                    peer,
+                .post(`${process.env.API_URL}/torrentfile/register`, {
+                    filename: fileName,
+                    size: fileSize,
+                    pieceSize,
                 })
-                .then((res) => {
-                    console.log(res.data);
+                .then(async (res) => {
+                    const { hashes, sizes } = await createPieceHashes(
+                        filePath,
+                        pieceSize
+                    );
+
+                    for (let i = 0; i < hashes.length; i++) {
+                        await axios.post(
+                            `${process.env.API_URL}/piece/register`,
+                            {
+                                hash: hashes[i],
+                                torrentFileId: res.data.id,
+                                size: sizes[i],
+                                index: i,
+                                peerId: peer.id,
+                            }
+                        );
+                    }
                 })
-                .catch((err) => {
-                    console.error(err.message);
+                .catch((error) => {
+                    if (error.response && error.response.status === 400) {
+                        console.error('Error:', error.response.data.message);
+                    } else {
+                        console.error('Unexpected error:', error.message);
+                    }
                 });
         } else {
-            console.log('File is not exist');
+            console.log('File does not exist');
         }
     } catch (e) {
-        console.log(e);
+        console.error('Error registering file:', e);
     }
 };
 
