@@ -1,130 +1,110 @@
-import readline from 'readline';
-import net from 'net';
-import { Peer, File } from '../types';
-import axios from 'axios';
-import { argv } from 'process';
-import dotenv from 'dotenv';
+import readline from "readline";
+import net from "net";
+import { Peer, File } from "../types";
+import axios from "axios";
+import { argv } from "process";
+import dotenv from "dotenv";
 
-import { createPeerServer } from './peerServer';
-import { downloadFile } from './peerClient';
-import { registerPeer, registerFile } from './peerContactTracker';
-// import { createTorrentFile } from './createPieceHashes';
-// import { getFileInfo, checkFileExists } from './fileService';
+import { createPeerServer } from "./peerServer";
+import { downloadFile } from "./peerClient";
+import TrackerAPI from "./trackerAPI";
+
 dotenv.config();
-const trackerUrl: string = process.env.TRACKER_URL ?? 'http://localhost:8000';
+const trackerUrl: string = process.env.TRACKER_URL ?? "http://localhost:8000";
 const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+  input: process.stdin,
+  output: process.stdout,
 });
 
-const peer: Peer = {
-    id: '',
-    ip: 'localhost',
-    port: parseInt(argv[2]),
-    download: 0,
-    upload: 0,
-};
+let peer: any;
+async function startPeer() {
+  peer = await TrackerAPI.startPeer("localhost", parseInt(argv[2]));
+  console.log(peer);
+  if (peer) {
+    createPeerServer(peer);
+  } else {
+    console.log("Error starting peer");
+  }
+}
+startPeer();
+console.log("To see list of commands, type 'help'");
 
-const file = {
-    name: 'test1',
-    size: 100,
-};
-// Lưu trữ các phần tệp dựa trên ID hoặc tên tệp
+//TrackerAPI.startPeer(peer);
 
-rl.on('line', async (input) => {
-    const inputs = input.trim().split(' ');
-    const command = inputs[0];
-    switch (command) {
-        case 'registerPeer': {
-            registerPeer(peer);
-            break;
-        }
+rl.on("line", async (input) => {
+  const inputs = input.trim().split(" ");
+  const command = inputs[0];
+  switch (command) {
+    //   case "help": {
+    //     console.log("Commands:");
+    //     console.log("register_peer: Register peer with tracker");
+    //     console.log(
+    //       "register_file <filePath> <fileName>: Register file with tracker"
+    //     );
+    //     console.log("download_file <port> <fileName>: Download file from peer");
+    //     console.log("exit");
+    //   }
+    //   case "register_peer": {
+    //     registerPeer(peer);
+    //     break;
+    //   }
 
-        case 'registerFile': {
-            // nhập info từ người dùng
-            if (inputs.length === 3) {
-                const filePath = inputs[1];
-                const fileName = inputs[2];
-                registerFile(peer, fileName, filePath);
-            } else {
-                console.log('Miss value');
-            }
-            break;
-        }
-        case 'startPeer': {
-            await axios
-                .patch(`${process.env.API_URL}/peer/update`, {
-                    port: peer.port,
-                    ip: peer.ip,
-                    isOnline: true,
-                })
-                .then((res) => {
-                    console.log(res.data);
-                    peer.id = res.data.id;
-                    peer.upload = res.data.upload;
-                    peer.download = res.data.download;
-                })
-                .catch((error) => {
-                    if (error.response && error.response.status === 400) {
-                        // Kiểm tra nếu mã lỗi là 400
-                        console.error('Error:', error.response.data.message);
-                    } else {
-                        // Xử lý các lỗi khác
-                        console.error('Unexpected error:', error.message);
-                    }
-                });
-        }
-        // case 'createTorrentFile': {
-        //     if (inputs.length >= 4) {
-        //         const filePath = inputs[1];
-        //         const fileName = inputs[2];
-        //         const torrentPath = inputs[3];
-        //         createTorrentFile(filePath, fileName, trackerUrl, torrentPath);
-        //     } else {
-        //         console.log('Miss value');
-        //     }
-        //     break;
-        // }
-        case 'downloadFile': {
-            if (inputs.length === 3) {
-                const filePath = inputs[1];
-                const fileName = inputs[2];
-                downloadFile(fileName, filePath, peer);
-            }
-            break;
-        }
-
-        case 'uploadFile': {
-            break;
-        }
-
-        case 'exit': {
-            await axios
-                .patch(`${process.env.API_URL}/peer/update`, {
-                    port: peer.port,
-                    ip: peer.ip,
-                    isOnline: false,
-                })
-                .catch((error) => {
-                    if (error.response && error.response.status === 400) {
-                        // Kiểm tra nếu mã lỗi là 400
-                        console.error('Error:', error.response.data.message);
-                    } else {
-                        // Xử lý các lỗi khác
-                        console.error('Unexpected error:', error.message);
-                    }
-                });
-            console.log('Closing readline...');
-            rl.close(); // Đóng rl khi người dùng nhập 'exit'
-            break;
-        }
-
-        default: {
-            console.log('Invalid Input!');
-        }
+    case "register_file": {
+      if (inputs.length === 2) {
+        const fileName = inputs[1];
+        await TrackerAPI.registerFile(peer, fileName, peer.port.toString());
+      } else {
+        console.log("Invalid input: register_file <fileName>");
+      }
+      break;
     }
+    case "start_peer": {
+      await TrackerAPI.startPeer("localhost", parseInt(argv[2]));
+      console.log("Peer: ", peer);
+    }
+    // case 'createTorrentFile': {
+    //     if (inputs.length >= 4) {
+    //         const filePath = inputs[1];
+    //         const fileName = inputs[2];
+    //         const torrentPath = inputs[3];
+    //         createTorrentFile(filePath, fileName, trackerUrl, torrentPath);
+    //     } else {
+    //         console.log('Miss value');
+    //     }
+    //     break;
+    // }
+    case "download_file": {
+      if (inputs.length === 3) {
+        const port = inputs[1];
+        const fileName = inputs[2];
+        downloadFile(fileName, port, peer);
+      }
+      break;
+    }
+
+    case "exit": {
+      await axios
+        .patch(`${process.env.API_URL}/peer/update`, {
+          port: peer.port,
+          ip: peer.ip,
+          isOnline: false,
+        })
+        .catch((error) => {
+          if (error.response && error.response.status === 400) {
+            // Kiểm tra nếu mã lỗi là 400
+            console.error("Error:", error.response.data.message);
+          } else {
+            // Xử lý các lỗi khác
+            console.error("Unexpected error:", error.message);
+          }
+        });
+      console.log("Closing readline...");
+      rl.close();
+      break;
+    }
+
+    default: {
+      console.log("Invalid command, type 'help' for list of commands");
+    }
+  }
 });
-
-// Create peerServer
-
-const server = createPeerServer(peer.port, rl, peer);

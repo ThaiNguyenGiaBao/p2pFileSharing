@@ -81,7 +81,6 @@ export const getFilePiece = async (
 
 // Hàm chia nhỏ file thành các phần (pieces) và lưu vào file
 export async function loadFilePieces(
-    filename: string,
     filePath: string,
     pieceSize: number
 ): Promise<void> {
