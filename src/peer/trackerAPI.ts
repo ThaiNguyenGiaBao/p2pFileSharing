@@ -8,12 +8,13 @@ import { checkFileExists, getFileSize } from "./fileService";
 import { loadFilePieces } from "./filePiecesManager";
 dotenv.config();
 class TrackerAPI {
-  static async registerPeer(peer: Peer) {
+  static async registerPeer(ip: string, port: number) {
+    let peer: Peer | null = null;
     await axios
-      .post(`${process.env.API_URL}/peer/register`, peer)
+      .post(`${process.env.API_URL}/peer/register`, { ip, port })
       .then((res) => {
+        peer = res.data;
         console.log("Peer registered successfully!");
-        peer.id = res.data.id;
       })
       .catch((error) => {
         if (error.response && error.response.status === 400) {
@@ -24,10 +25,11 @@ class TrackerAPI {
           console.error("Unexpected error:", error.message);
         }
       });
+    return peer;
   }
   // Đăng kí file với tracker
   static async registerFile(peer: Peer, fileName: string, port: string) {
-    console.log(peer);
+    
     try {
       const filePath = `${process.env.FILE_PATH}/${port}/${fileName}`;
       const isFileExist = await checkFileExists(filePath);
@@ -51,11 +53,11 @@ class TrackerAPI {
 
             for (let i = 0; i < hashes.length; i++) {
               console.log(
-                "Registering piece #",
-                i,
-                " with size",
-                sizes[i],
-                " Bytes succesfully!"
+                "Registering piece #" +
+                  i +
+                  " with size " +
+                  sizes[i] +
+                  " Bytes succesfully!"
               );
 
               await axios.post(`${process.env.API_URL}/piece/register`, {

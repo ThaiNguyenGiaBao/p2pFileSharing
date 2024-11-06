@@ -8,10 +8,6 @@ import axios from "axios";
 // Hàm tạo server peer
 export const createPeerServer = (peer: Peer) => {
   const server = net.createServer((socket: net.Socket) => {
-    console.log(
-      "Peer connected: " + socket.remoteAddress + ":" + socket.remotePort
-    );
-
     socket.on("data", async (data: Buffer) => {
       try {
         const message = JSON.parse(data.toString().trim());
@@ -38,9 +34,9 @@ export const createPeerServer = (peer: Peer) => {
 
             // Gửi phần dữ liệu (piece) cho client
             socket.write(pieceData);
-            console.log(`Sent piece ${index} of file ${filename} to client.`);
+            console.log(`Sent piece ${filename}#${index} successfully`);
 
-            peer.upload = Number(peer.upload) + 1;
+            peer.upload = Number(peer.upload) + pieceData.length;
 
             await axios
               .patch(`${process.env.API_URL}/peer/update`, {

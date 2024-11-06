@@ -19,8 +19,20 @@ const rl = readline.createInterface({
 let peer: any;
 async function startPeer() {
   peer = await TrackerAPI.startPeer("localhost", parseInt(argv[2]));
-  console.log(peer);
+  if (!peer) {
+    peer = await TrackerAPI.registerPeer("localhost", parseInt(argv[2]));
+  }
   if (peer) {
+    console.log(
+      "Peer ip: " +
+        peer.ip +
+        ", port: " +
+        peer.port +
+        ", download: " +
+        peer.download +
+        ", upload: " +
+        peer.upload
+    );
     createPeerServer(peer);
   } else {
     console.log("Error starting peer");
@@ -35,19 +47,15 @@ rl.on("line", async (input) => {
   const inputs = input.trim().split(" ");
   const command = inputs[0];
   switch (command) {
-    //   case "help": {
-    //     console.log("Commands:");
-    //     console.log("register_peer: Register peer with tracker");
-    //     console.log(
-    //       "register_file <filePath> <fileName>: Register file with tracker"
-    //     );
-    //     console.log("download_file <port> <fileName>: Download file from peer");
-    //     console.log("exit");
-    //   }
-    //   case "register_peer": {
-    //     registerPeer(peer);
-    //     break;
-    //   }
+    case "help": {
+      console.log("Commands:");
+      console.log(
+        "+ register_file <filePath> <fileName>: Register file with tracker"
+      );
+      console.log("+ download_file <port> <fileName>: Download file from peer");
+      console.log("+ exit");
+      break;
+    }
 
     case "register_file": {
       if (inputs.length === 2) {
@@ -58,10 +66,7 @@ rl.on("line", async (input) => {
       }
       break;
     }
-    case "start_peer": {
-      await TrackerAPI.startPeer("localhost", parseInt(argv[2]));
-      console.log("Peer: ", peer);
-    }
+
     // case 'createTorrentFile': {
     //     if (inputs.length >= 4) {
     //         const filePath = inputs[1];
@@ -74,10 +79,11 @@ rl.on("line", async (input) => {
     //     break;
     // }
     case "download_file": {
-      if (inputs.length === 3) {
-        const port = inputs[1];
-        const fileName = inputs[2];
-        downloadFile(fileName, port, peer);
+      if (inputs.length === 2) {
+        const fileName = inputs[1];
+        downloadFile(fileName, peer as Peer);
+      } else {
+        console.log("Invalid input: download_file <port> <fileName>");
       }
       break;
     }
