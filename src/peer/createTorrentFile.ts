@@ -34,7 +34,7 @@ const createTorrentFile = async (
     filePath: string,
     name: string,
     outputDir: string,
-    pieceSize: number = 512 * 1024
+    pieceSize: number = 64 * 1024
 ): Promise<void> => {
     try {
         // Bước 1: Tạo hashes cho các mảnh dữ liệu

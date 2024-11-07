@@ -37,6 +37,18 @@ const downloadPieceFromPeer = async (
           } else {
             fs.appendFileSync(filePath, data, { flag: "a" });
             saveFilePiece(filePath, pieceIndex, data); // Cập nhật danh sách các phần
+            console.log(
+              "Downloaded piece #" +
+                pieceIndex +
+                " with size " +
+                data.length +
+                " Bytes" +
+                " from peer ip:" +
+                peer.ip +
+                ", port:" +
+                peer.port +
+                " successfully"
+            );
           }
 
           // Trả về true khi tải xuống thành công
@@ -90,10 +102,10 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
 
       const peers: Peer[] = peersResponse.data;
 
-      console.log("List of peers having piece #" + pieceIndex + ":");
-      peers.forEach((peer) => {
-        console.log(" + ip:" + peer.ip + ", port:" + peer.port);
-      });
+      // console.log("List of peers having piece #" + pieceIndex + ":");
+      // peers.forEach((peer) => {
+      //   console.log(" + ip:" + peer.ip + ", port:" + peer.port);
+      // });
       // Kiểm tra nếu có peer sẵn sàng cung cấp phần dữ liệu
       if (!peers || peers.length === 0) {
         console.log(`No peer found for piece ${pieceIndex}`);
@@ -120,11 +132,10 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
         if (!isSuccess) {
           continue; // Thử tải xuống từ peer tiếp theo nếu có lỗi
         }
-        
+
         myPeer.download =
           (parseInt(myPeer.download.toString()) || 0) +
           (parseInt(piece.size.toString()) || 0);
-
 
         await axios
           .patch(`${process.env.API_URL}/peer/update`, {

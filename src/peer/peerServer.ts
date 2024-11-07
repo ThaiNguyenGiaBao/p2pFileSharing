@@ -34,7 +34,9 @@ export const createPeerServer = (peer: Peer) => {
 
             // Gửi phần dữ liệu (piece) cho client
             socket.write(pieceData);
-            console.log(`Sent piece ${filename}#${index} successfully`);
+            console.log(
+              `Sent piece ${filename}#${index} with size ${pieceData.length} Bytes successfully`
+            );
 
             peer.upload = Number(peer.upload) + pieceData.length;
 

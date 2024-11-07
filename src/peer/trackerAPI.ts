@@ -29,11 +29,10 @@ class TrackerAPI {
   }
   // Đăng kí file với tracker
   static async registerFile(peer: Peer, fileName: string, port: string) {
-    
     try {
       const filePath = `${process.env.FILE_PATH}/${port}/${fileName}`;
       const isFileExist = await checkFileExists(filePath);
-      const pieceSize = 512 * 1024;
+      const pieceSize = 64 * 1024;
 
       if (isFileExist) {
         const fileSize = await getFileSize(filePath);
