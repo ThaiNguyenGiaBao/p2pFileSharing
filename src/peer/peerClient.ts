@@ -35,24 +35,8 @@ const downloadPieceFromPeer = async (
             // Trả về false khi có lỗi
             resolve({ data: null, isSuccess: false });
             return; // Thoát khỏi callback
-          } else {
-            // fs.appendFileSync(filePath, data, { flag: "a" });
-            // saveFilePiece(filePath, pieceIndex, data); // Cập nhật danh sách các phần
-            // console.log(
-            //   "Downloaded piece #" +
-            //     pieceIndex +
-            //     " with size " +
-            //     data.length +
-            //     " Bytes" +
-            //     " from peer ip:" +
-            //     peer.ip +
-            //     ", port:" +
-            //     peer.port +
-            //     " successfully"
-            // );
-          }
-
-          // Trả về true khi tải xuống thành công
+          } 
+          
           resolve({ data, isSuccess: true });
           client.end();
         });
