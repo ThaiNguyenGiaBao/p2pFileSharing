@@ -57,6 +57,29 @@ rl.on("line", async (input) => {
       break;
     }
 
+    case "me": {
+      console.log(
+        "Peer ip: " +
+          peer.ip +
+          ", port: " +
+          peer.port +
+          ", download: " +
+          peer.download +
+          ", upload: " +
+          peer.upload
+      );
+      break;
+    }
+
+    case "list_files": {
+      const files = await TrackerAPI.getFiles();
+      console.log("Files:");
+      files.forEach((file: any) => {
+        console.log(`+ ${file.filename} - ${file.size} Bytes`);
+      });
+      break;
+    }
+
     case "register_file": {
       if (inputs.length === 2) {
         const fileName = inputs[1];

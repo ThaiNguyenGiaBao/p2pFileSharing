@@ -6,7 +6,7 @@
         "tracker": "ts-node src/tracker/tracker.ts",
         "peer_test": "nodemon src/peer/peer.ts",
         "peer": "ts-node src/peer/peer.ts",
-        "test": "nodemon src/peer/test.ts" 
+        "test": "nodemon src/peer/test.ts"
     },
     "keywords": [],
     "author": "",
@@ -19,6 +19,7 @@
         "express-async-handler": "^1.2.0",
         "net": "^1.0.2",
         "pg": "^8.13.0",
+        "progress": "^2.0.3",
         "socket.io": "^4.8.0",
         "socket.io-client": "^4.8.0",
         "webtorrent": "^2.5.1"
@@ -28,6 +29,7 @@
         "@types/express": "^5.0.0",
         "@types/node": "^22.7.4",
         "@types/pg": "^8.11.10",
+        "@types/progress": "^2.0.7",
         "@types/webtorrent": "^0.109.9",
         "nodemon": "^3.1.7",
         "ts-node": "^10.9.2",

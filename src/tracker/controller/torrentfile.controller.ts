@@ -38,6 +38,22 @@ class TorrentFileController {
     }
   }
 
+  // // Get all torrentfiles
+  // router.get("/get", asyncHandler(TorrentFileController.getTorrentFiles));
+  static async getTorrentFiles(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    try {
+      const torrentFiles = await pool.query("SELECT * FROM torrentfile");
+      res.status(200).json(torrentFiles.rows);
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).send(err.message);
+    }
+  }
+
   // // Get a torrentfile by filename
   // router.get("/:filename", asyncHandler(TorrentFileController.getTorrentFile));
   static async getTorrentFile(req: Request, res: Response, next: NextFunction) {

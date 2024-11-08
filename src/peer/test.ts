@@ -1,13 +1,14 @@
-import readline from "readline";
+// const ProgressBar = require('progress');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+import ProgressBar from 'progress';
+// Create a new progress bar instance with the total length
+const bar = new ProgressBar('[:bar] :percent', { total: 20, width: 20 });
 
-rl.on("line", async (input) => {
-  console.log("Received input:", input);
-  const inputs = input.trim().split(" ");
-  const command = inputs[0];
-  console.log("Command is:", command);
-});
+// Simulate a process with a timer
+const timer = setInterval(() => {
+  bar.tick();
+  if (bar.complete) {
+    console.log('\nComplete!\n');
+    clearInterval(timer);
+  }
+}, 100);

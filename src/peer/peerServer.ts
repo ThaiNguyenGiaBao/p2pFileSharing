@@ -1,5 +1,4 @@
 import net from "net";
-import readline from "readline";
 import fs from "fs/promises";
 import path from "path";
 import { Peer } from "../types";

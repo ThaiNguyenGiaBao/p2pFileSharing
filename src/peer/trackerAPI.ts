@@ -8,6 +8,16 @@ import { checkFileExists, getFileSize } from "./fileService";
 import { loadFilePieces } from "./filePiecesManager";
 dotenv.config();
 class TrackerAPI {
+  static async getFiles() {
+    try {
+      const res = await axios.get(`${process.env.API_URL}/torrentfile`);
+      return res.data;
+    } catch (err: any) {
+      console.error(err.message);
+      return [];
+    }
+  }
+
   static async registerPeer(ip: string, port: number) {
     let peer: Peer | null = null;
     await axios
@@ -58,14 +68,20 @@ class TrackerAPI {
                   sizes[i] +
                   " Bytes succesfully!"
               );
-
-              await axios.post(`${process.env.API_URL}/piece/register`, {
-                hash: hashes[i],
-                torrentFileId: res.data.id,
-                size: sizes[i],
-                index: i,
-                peerId: peer.id,
-              });
+              try {
+                await axios.post(`${process.env.API_URL}/piece/register`, {
+                  hash: hashes[i],
+                  torrentFileId: res.data.id,
+                  size: sizes[i],
+                  index: i,
+                  peerId: peer.id,
+                });
+              } catch (err: any) {
+                if (err.response && err.response.status === 400) {
+                } else {
+                  console.error("Unexpected error: Internal Server Error");
+                }
+              }
             }
             console.log("Torrent file registered successfully!");
           })

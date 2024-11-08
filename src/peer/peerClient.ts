@@ -4,6 +4,7 @@ import axios from "axios";
 import path from "path";
 import { Peer, Piece } from "../types";
 import { saveFilePiece } from "./filePiecesManager"; // Import các hàm cần thiết
+import ProgressBar from "progress";
 
 // Hàm tải xuống một phần (piece) của tệp từ một peer
 const downloadPieceFromPeer = async (
@@ -11,14 +12,14 @@ const downloadPieceFromPeer = async (
   pieceIndex: number,
   filename: string,
   filePath: string
-): Promise<boolean> => {
+): Promise<{ data: any; isSuccess: boolean }> => {
   return new Promise((resolve) => {
     const client = net.createConnection(
       { port: peer.port, host: peer.ip },
       () => {
-        console.log(
-          `Connected to peer ip:${peer.ip}, port:${peer.port} to download piece ${pieceIndex}`
-        );
+        // console.log(
+        //   `Connected to peer ip:${peer.ip}, port:${peer.port} to download #${pieceIndex}`
+        // );
 
         // Yêu cầu peer gửi phần của tệp
         client.write(
@@ -32,27 +33,27 @@ const downloadPieceFromPeer = async (
           if (message.startsWith("ERROR:")) {
             console.error(`Received error from donwloaded peer: ${message}`);
             // Trả về false khi có lỗi
-            resolve(false);
+            resolve({ data: null, isSuccess: false });
             return; // Thoát khỏi callback
           } else {
-            fs.appendFileSync(filePath, data, { flag: "a" });
-            saveFilePiece(filePath, pieceIndex, data); // Cập nhật danh sách các phần
-            console.log(
-              "Downloaded piece #" +
-                pieceIndex +
-                " with size " +
-                data.length +
-                " Bytes" +
-                " from peer ip:" +
-                peer.ip +
-                ", port:" +
-                peer.port +
-                " successfully"
-            );
+            // fs.appendFileSync(filePath, data, { flag: "a" });
+            // saveFilePiece(filePath, pieceIndex, data); // Cập nhật danh sách các phần
+            // console.log(
+            //   "Downloaded piece #" +
+            //     pieceIndex +
+            //     " with size " +
+            //     data.length +
+            //     " Bytes" +
+            //     " from peer ip:" +
+            //     peer.ip +
+            //     ", port:" +
+            //     peer.port +
+            //     " successfully"
+            // );
           }
 
           // Trả về true khi tải xuống thành công
-          resolve(true);
+          resolve({ data, isSuccess: true });
           client.end();
         });
       }
@@ -62,7 +63,7 @@ const downloadPieceFromPeer = async (
       console.log(
         `Error connecting to peer ip:${peer.ip}, port:${peer.port}: ${err.message}`
       );
-      resolve(false); // Trả về false khi có lỗi kết nối
+      resolve({ data: null, isSuccess: false }); // Trả về false khi có lỗi kết nối
     });
   });
 };
@@ -93,6 +94,21 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
     const pieces: Piece[] = pieceListResponse.data;
 
     console.log(`Found ${pieces.length} pieces for the file ${filename}.`);
+
+    const bar = new ProgressBar(
+      "[:bar] :percent Downloaded piece #:idx with size :size Bytes from peer ip: :ip, port: :port successfully",
+      {
+        total: pieces.length,
+        width: 20,
+        complete: "#",
+        incomplete: "-",
+      }
+    );
+
+    // Simulate a process with a timer
+
+    const pieceDataList = Array(pieces.length);
+
     // Tải xuống từng phần của tệp từ các peer
     for (let pieceIndex = 0; pieceIndex < pieces.length; pieceIndex++) {
       const piece: Piece = pieces[pieceIndex];
@@ -102,11 +118,6 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
 
       const peers: Peer[] = peersResponse.data;
 
-      // console.log("List of peers having piece #" + pieceIndex + ":");
-      // peers.forEach((peer) => {
-      //   console.log(" + ip:" + peer.ip + ", port:" + peer.port);
-      // });
-      // Kiểm tra nếu có peer sẵn sàng cung cấp phần dữ liệu
       if (!peers || peers.length === 0) {
         console.log(`No peer found for piece ${pieceIndex}`);
         continue;
@@ -116,28 +127,35 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
       peers.sort((a, b) => a.upload - b.upload);
 
       let isSuccess = false;
+      let data = null;
 
       for (let i = 0; i < peers.length && !isSuccess; i++) {
         const peer: Peer = peers[i];
         if (peer.port === myPeer.port && peer.ip === myPeer.ip) {
           continue;
         }
-        isSuccess = await downloadPieceFromPeer(
+        ({ data, isSuccess } = await downloadPieceFromPeer(
           peer,
           pieceIndex,
           filename,
           filePath
-        ); // Sử dụng await để đảm bảo thứ tự
+        )); // Sử dụng await để đảm bảo thứ tự
 
         if (!isSuccess) {
           continue; // Thử tải xuống từ peer tiếp theo nếu có lỗi
         }
+        pieceDataList[pieceIndex] = data;
+        bar.tick({
+          idx: pieceIndex,
+          size: data.length,
+          ip: peer.ip,
+          port: peer.port,
+        });
 
         myPeer.download =
           (parseInt(myPeer.download.toString()) || 0) +
           (parseInt(piece.size.toString()) || 0);
-
-        await axios
+        axios
           .patch(`${process.env.API_URL}/peer/update`, {
             port: myPeer.port,
             ip: myPeer.ip,
@@ -152,6 +170,7 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
               console.error("Unexpected error:", error.message);
             }
           });
+
         try {
           await axios.post(`${process.env.API_URL}/piece/register`, {
             hash: piece.hash,
@@ -162,7 +181,6 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
           });
         } catch (err: any) {
           if (err.response && err.response.status === 400) {
-            console.error(err.response.data.message);
           } else {
             console.error("Unexpected error: Internal server error");
           }
@@ -172,6 +190,16 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
         console.log(`Failed to download piece ${pieceIndex}`);
       }
     }
+
+    // Ghi các phần đã tải xuống vào tệp
+    for (let i = 0; i < pieceDataList.length; i++) {
+      if (pieceDataList[i]) {
+        //console.log(`Writing #${i} to file`);
+        fs.appendFileSync(filePath, pieceDataList[i], { flag: "a" });
+        saveFilePiece(filePath, i, pieceDataList[i]); // Cập nhật danh sách các phần
+      }
+    }
+    console.log(`Downloaded file ${filename} successfully!`);
   } catch (err: any) {
     console.log("Error downloading file:", err.message);
   }
