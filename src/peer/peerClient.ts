@@ -5,6 +5,7 @@ import path from "path";
 import { Peer, Piece } from "../types";
 import { saveFilePiece } from "./filePiecesManager"; // Import các hàm cần thiết
 import ProgressBar from "progress";
+import { Worker } from "worker_threads";
 
 // Hàm tải xuống một phần (piece) của tệp từ một peer
 const downloadPieceFromPeer = async (
@@ -35,8 +36,8 @@ const downloadPieceFromPeer = async (
             // Trả về false khi có lỗi
             resolve({ data: null, isSuccess: false });
             return; // Thoát khỏi callback
-          } 
-          
+          }
+
           resolve({ data, isSuccess: true });
           client.end();
         });
@@ -92,90 +93,57 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
     // Simulate a process with a timer
 
     const pieceDataList = Array(pieces.length);
+    const workers: Worker[] = [];
 
     // Tải xuống từng phần của tệp từ các peer
     for (let pieceIndex = 0; pieceIndex < pieces.length; pieceIndex++) {
-      const piece: Piece = pieces[pieceIndex];
-      const peersResponse = await axios.get(
-        `${process.env.API_URL}/piece/peer/${piece.hash}`
-      );
-
-      const peers: Peer[] = peersResponse.data;
-
-      if (!peers || peers.length === 0) {
-        console.log(`No peer found for piece ${pieceIndex}`);
-        continue;
-      }
-
-      // sort peers by upload from smallest to largest
-      peers.sort((a, b) => a.upload - b.upload);
-
-      let isSuccess = false;
-      let data = null;
-
-      for (let i = 0; i < peers.length && !isSuccess; i++) {
-        const peer: Peer = peers[i];
-        if (peer.port === myPeer.port && peer.ip === myPeer.ip) {
-          continue;
-        }
-        ({ data, isSuccess } = await downloadPieceFromPeer(
-          peer,
-          pieceIndex,
+      const worker = new Worker("./src/peer/workerDownloadPiece.mjs", {
+        workerData: {
+          piece: pieces[pieceIndex],
+          myPeer,
           filename,
-          filePath
-        )); // Sử dụng await để đảm bảo thứ tự
+          filePath,
+          pieceIndex,
+          bar,
+        },
+      });
 
-        if (!isSuccess) {
-          continue; // Thử tải xuống từ peer tiếp theo nếu có lỗi
+      worker.on("message", (message) => {
+        if (message.success) {
+          console.log(`Successfully downloaded piece #${message.pieceIndex}`);
+
+          pieceDataList[message.pieceIndex] = message.data;
+        } else {
+          console.log(`Failed to download piece #${message.pieceIndex}`);
         }
-        pieceDataList[pieceIndex] = data;
-        bar.tick({
-          idx: pieceIndex,
-          size: data.length,
-          ip: peer.ip,
-          port: peer.port,
-        });
+      });
 
-        myPeer.download =
-          (parseInt(myPeer.download.toString()) || 0) +
-          (parseInt(piece.size.toString()) || 0);
-        axios
-          .patch(`${process.env.API_URL}/peer/update`, {
-            port: myPeer.port,
-            ip: myPeer.ip,
-            download: myPeer.download,
-          })
-          .catch((error) => {
-            if (error.response && error.response.status === 400) {
-              // Kiểm tra nếu mã lỗi là 400
-              console.error("Error:", error.response.data.message);
-            } else {
-              // Xử lý các lỗi khác
-              console.error("Unexpected error:", error.message);
-            }
-          });
+      worker.on("error", (error) => {
+        console.error("Worker error:", error);
+      });
 
-        try {
-          await axios.post(`${process.env.API_URL}/piece/register`, {
-            hash: piece.hash,
-            torrentFileId: piece.torrentid,
-            size: piece.size,
-            index: piece.index,
-            peerId: myPeer.id,
-          });
-        } catch (err: any) {
-          if (err.response && err.response.status === 400) {
-          } else {
-            console.error("Unexpected error: Internal server error");
-          }
+      worker.on("exit", (code) => {
+        if (code !== 0) {
+          console.error(`Worker stopped with exit code ${code}`);
         }
-      }
-      if (!isSuccess) {
-        console.log(`Failed to download piece ${pieceIndex}`);
-      }
+      });
+
+      workers.push(worker);
     }
 
     // Ghi các phần đã tải xuống vào tệp
+
+    // Wait for all workers to finish
+    const workerPromises = workers.map((worker) => {
+      return new Promise((resolve) => {
+        worker.on("exit", () => {
+          resolve(null);
+        });
+      });
+    });
+
+    await Promise.all(workerPromises);
+
     for (let i = 0; i < pieceDataList.length; i++) {
       if (pieceDataList[i]) {
         //console.log(`Writing #${i} to file`);
