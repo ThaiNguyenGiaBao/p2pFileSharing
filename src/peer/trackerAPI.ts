@@ -6,6 +6,8 @@ import { Peer, File } from "../types";
 import { createPieceHashes } from "./createPieceHashes";
 import { checkFileExists, getFileSize } from "./fileService";
 import { loadFilePieces } from "./filePiecesManager";
+import ProgressBar from "progress";
+
 dotenv.config();
 class TrackerAPI {
   static async getFiles() {
@@ -20,6 +22,7 @@ class TrackerAPI {
 
   static async registerPeer(ip: string, port: number) {
     let peer: Peer | null = null;
+
     await axios
       .post(`${process.env.API_URL}/peer/register`, { ip, port })
       .then((res) => {
@@ -59,15 +62,17 @@ class TrackerAPI {
               filePath,
               pieceSize
             );
+            const bar = new ProgressBar(
+              "[:bar] :percent Registering :filename #:idx with size :size Bytes successfully",
+              {
+                total: hashes.length,
+                width: 20,
+                complete: "#",
+                incomplete: "-",
+              }
+            );
 
             for (let i = 0; i < hashes.length; i++) {
-              console.log(
-                "Registering piece #" +
-                  i +
-                  " with size " +
-                  sizes[i] +
-                  " Bytes succesfully!"
-              );
               try {
                 await axios.post(`${process.env.API_URL}/piece/register`, {
                   hash: hashes[i],
@@ -82,6 +87,7 @@ class TrackerAPI {
                   console.error("Unexpected error: Internal Server Error");
                 }
               }
+              bar.tick({ idx: i, size: sizes[i], filename: fileName });
             }
             console.log("Torrent file registered successfully!");
           })

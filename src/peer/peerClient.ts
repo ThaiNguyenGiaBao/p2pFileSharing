@@ -5,6 +5,8 @@ import path from "path";
 import { Peer, Piece } from "../types";
 import { saveFilePiece } from "./filePiecesManager"; // Import các hàm cần thiết
 import { Worker } from "worker_threads";
+import ProgressBar from "progress";
+import { checkPieceExist } from "./fileService";
 
 // Hàm tải xuống một phần (piece) của tệp từ một peer
 const downloadPieceFromPeer = async (
@@ -85,8 +87,36 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
     // Declare a list to store the downloaded piece data with the size = pieces.length
     const pieceFileDataList: any[] = new Array(pieces.length);
 
+    const bar = new ProgressBar(
+      "[:bar] :percent Downloaded piece #:idx with size :size Bytes from peer ip: :ip, port: :port successfully",
+      {
+        total: pieces.length,
+        width: 20,
+        complete: "#",
+        incomplete: "-",
+      }
+    );
+
     // Tải xuống từng phần của tệp từ các peer
+    let isUpdating = false;
+
     for (let pieceIndex = 0; pieceIndex < pieces.length; pieceIndex++) {
+      // Check if the piece has been downloaded
+      const extractedFilename = path.basename(filename, path.extname(filename));
+      const pieceFilePath = `${dir}/${extractedFilename}/piece_${pieceIndex}.bin`;
+      if (await checkPieceExist(myPeer.port, filename, pieceIndex)) {
+        //console.log(`Piece #${pieceIndex} has been downloaded`);
+        const pieceData = fs.readFileSync(pieceFilePath);
+        bar.tick({
+          idx: pieceIndex,
+          size: pieceData.length,
+          ip: myPeer.ip,
+          port: myPeer.port,
+        });
+        pieceFileDataList[pieceIndex] = pieceData;
+        continue;
+      }
+
       const worker = new Worker("./src/peer/workerDownloadPiece.mjs", {
         workerData: {
           piece: pieces[pieceIndex],
@@ -96,13 +126,22 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
           pieceIndex,
         },
       });
-      worker.on("message", (message) => {
+
+      worker.on("message", async (message) => {
         if (message.success) {
-          console.log(
-            `Download piece #${message.pieceIndex} with size ${message.data.length} Bytes from peer ip:${message.ip} port:${message.port} successfully!`
-          );
-        
+          while (isUpdating) {
+            await new Promise((resolve) => setTimeout(resolve, 1));
+          }
+          isUpdating = true; // Acquire lock
+
+          bar.tick({
+            idx: message.pieceIndex,
+            size: message.data.length,
+            ip: message.ip,
+            port: message.port,
+          });
           pieceFileDataList[message.pieceIndex] = message.data;
+          isUpdating = false; // Release lock
         } else {
           console.log(`Failed to download piece #${message.pieceIndex}`);
         }
