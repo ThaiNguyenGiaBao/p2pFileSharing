@@ -14,4 +14,6 @@ router.get(
     asyncHandler(PieceController.getPeersByHashPiece)
 );
 
+router.get('/sort/:filename', asyncHandler(PieceController.sortPieces));
+
 export default router;

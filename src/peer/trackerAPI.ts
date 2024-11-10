@@ -115,7 +115,6 @@ class TrackerAPI {
         isOnline: true,
       })
       .then((res) => {
-        console.log("Peer started!");
         peer = res.data;
         // peer.id = res.data.id;
         // peer.upload = res.data.upload;

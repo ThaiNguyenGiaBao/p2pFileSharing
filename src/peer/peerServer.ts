@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import path from "path";
 import { Peer } from "../types";
 import axios from "axios";
+import { checkFileExists } from "./fileService";
 
 // Hàm tạo server peer
 export const createPeerServer = (peer: Peer) => {
@@ -29,6 +30,14 @@ export const createPeerServer = (peer: Peer) => {
 
           try {
             // Đọc phần dữ liệu từ file
+            // Check if the piece of file exists
+            if (!(await checkFileExists(pieceFilePath))) {
+              console.log(`Piece ${filename}#${index} does not exist`);
+
+              socket.write("ERROR: Piece does not exist");
+              return;
+            }
+
             const pieceData = await fs.readFile(pieceFilePath);
 
             // Gửi phần dữ liệu (piece) cho client
@@ -69,9 +78,6 @@ export const createPeerServer = (peer: Peer) => {
       }
     });
 
-    // rl.on('line', (input: string) => {
-    //     socket.write(input);
-    // });
   });
 
   server.listen(peer.port, () => {

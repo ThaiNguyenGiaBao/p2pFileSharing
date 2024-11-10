@@ -8,52 +8,52 @@ import { Worker } from "worker_threads";
 import ProgressBar from "progress";
 import { checkPieceExist } from "./fileService";
 
-// Hàm tải xuống một phần (piece) của tệp từ một peer
-const downloadPieceFromPeer = async (
-  peer: Peer,
-  pieceIndex: number,
-  filename: string,
-  filePath: string
-): Promise<boolean> => {
-  return new Promise((resolve) => {
-    const client = net.createConnection(
-      { port: peer.port, host: peer.ip },
-      () => {
-        console.log(
-          `Connected to peer ip:${peer.ip}, port:${peer.port} to download piece ${pieceIndex}`
-        );
+// // Hàm tải xuống một phần (piece) của tệp từ một peer
+// const downloadPieceFromPeer = async (
+//   peer: Peer,
+//   pieceIndex: number,
+//   filename: string,
+//   filePath: string
+// ): Promise<boolean> => {
+//   return new Promise((resolve) => {
+//     const client = net.createConnection(
+//       { port: peer.port, host: peer.ip },
+//       () => {
+//         console.log(
+//           `Connected to peer ip:${peer.ip}, port:${peer.port} to download piece ${pieceIndex}`
+//         );
 
-        // Yêu cầu peer gửi phần của tệp
-        client.write(
-          JSON.stringify({ action: "download", pieceIndex, filename })
-        );
+//         // Yêu cầu peer gửi phần của tệp
+//         client.write(
+//           JSON.stringify({ action: "download", pieceIndex, filename })
+//         );
 
-        client.on("data", (data) => {
-          //console.log(data.toString());
-          const message = data.toString();
-          // Lưu phần tải xuống vào tệp
-          if (message.startsWith("ERROR:")) {
-            console.error(`Received error from donwloaded peer: ${message}`);
-            // Trả về false khi có lỗi
-            resolve(false);
-            return; // Thoát khỏi callback
-          }
+//         client.on("data", (data) => {
+//           //console.log(data.toString());
+//           const message = data.toString();
+//           // Lưu phần tải xuống vào tệp
+//           if (message.startsWith("ERROR:")) {
+//             console.error(`Received error from donwloaded peer: ${message}`);
+//             // Trả về false khi có lỗi
+//             resolve(false);
+//             return; // Thoát khỏi callback
+//           }
 
-          // Trả về true khi tải xuống thành công
-          resolve(true);
-          client.end();
-        });
-      }
-    );
+//           // Trả về true khi tải xuống thành công
+//           resolve(true);
+//           client.end();
+//         });
+//       }
+//     );
 
-    client.on("error", (err) => {
-      console.log(
-        `Error connecting to peer ip:${peer.ip}, port:${peer.port}: ${err.message}`
-      );
-      resolve(false); // Trả về false khi có lỗi kết nối
-    });
-  });
-};
+//     client.on("error", (err) => {
+//       console.log(
+//         `Error connecting to peer ip:${peer.ip}, port:${peer.port}: ${err.message}`
+//       );
+//       resolve(false); // Trả về false khi có lỗi kết nối
+//     });
+//   });
+// };
 
 // Hàm bắt đầu tải xuống tệp
 const downloadFile = async (filename: string, myPeer: Peer) => {
@@ -168,19 +168,24 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
 
     await Promise.all(workerPromises);
 
-    //console.log("All workers finished downloading pieces");
+    // Fail if any piece is missing
+    if (pieceFileDataList.length !== pieces.length) {
+      console.error("Failed to download the file");
+      return;
+    }
 
-    // // Write the downloaded piece data to the file
     for (let i = 0; i < pieceFileDataList.length; i++) {
       //console.log(`#${i} has size: ${pieceFileDataList[i].length}`);
       fs.appendFileSync(filePath, pieceFileDataList[i], { flag: "a" });
 
-      saveFilePiece(filePath, i, pieceFileDataList[i]);
+      //saveFilePiece(filePath, i, pieceFileDataList[i]);
     }
     console.log(`File ${filename} has been downloaded successfully!`);
   } catch (err: any) {
-    console.log("Error downloading file:", err.message);
+    if (err.response) {
+      console.error("Error:", err.response.data.message);
+    } 
   }
 };
 
-export { downloadPieceFromPeer, downloadFile };
+export { downloadFile };

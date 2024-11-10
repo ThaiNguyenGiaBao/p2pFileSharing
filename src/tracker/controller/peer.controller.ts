@@ -91,7 +91,7 @@ class PeerController {
     next: NextFunction
   ): Promise<void> {
     try {
-      const peers = await pool.query("SELECT id, ip, port FROM peer");
+      const peers = await pool.query("SELECT * FROM peer");
       res.status(200).json(peers.rows);
     } catch (err: any) {
       console.error(err);

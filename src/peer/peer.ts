@@ -33,14 +33,13 @@ async function startPeer() {
         ", upload: " +
         peer.upload
     );
-    createPeerServer(peer);
+    await createPeerServer(peer);
   } else {
     console.log("Error starting peer");
   }
 }
 startPeer();
 console.log("To see list of commands, type 'help'");
-
 //TrackerAPI.startPeer(peer);
 
 rl.on("line", async (input) => {
@@ -53,6 +52,8 @@ rl.on("line", async (input) => {
         "+ register_file <filePath> <fileName>: Register file with tracker"
       );
       console.log("+ download_file <port> <fileName>: Download file from peer");
+      console.log("+ list_files: List all files");
+      console.log("+ me: Show peer information");
       console.log("+ exit");
       break;
     }
