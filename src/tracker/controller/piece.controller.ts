@@ -156,6 +156,62 @@ class PieceController {
       res.status(500).send(err.message);
     }
   }
+
+  static async deletePiecePeer(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ) {
+    const { ip, port, filename, index } = req.body;
+    if (!ip || !ip || !filename || index == undefined) {
+      res.status(400).json({
+        message: "Add ip, port, filename, index",
+      });
+      return;
+    }
+
+    const peerId = await pool.query(
+      "SELECT id FROM peer WHERE ip = $1 AND port = $2",
+      [ip, port]
+    );
+    console.log("PeerId::", peerId.rows);
+    if (peerId.rows.length == 0) {
+      res.status(400).json({
+        message: "Peer not found",
+      });
+      return;
+    }
+
+    const hashPiece = await pool.query(
+      "SELECT hash FROM piece JOIN torrentfile ON torrentId = torrentfile.id WHERE filename = $1 AND index = $2",
+      [filename, index]
+    );
+    console.log("HashPiece::", hashPiece.rows);
+    if (hashPiece.rows.length == 0) {
+      res.status(400).json({
+        message: "Piece not found",
+      });
+      return;
+    }
+
+    try {
+      const peerPiece = await pool.query(
+        "DELETE FROM peerPieceR WHERE peerId = $1 AND hashPiece = $2 RETURNING *",
+        [peerId.rows[0].id, hashPiece.rows[0].hash]
+      );
+      if (peerPiece.rows.length == 0) {
+        res.status(400).json({
+          message: "PeerPiece not found",
+        });
+        return;
+      }
+
+      res.status(200).json(peerPiece.rows[0]);
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).send(err.message);
+    }
+  }
 }
 
 export default PieceController;

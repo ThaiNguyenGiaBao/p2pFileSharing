@@ -100,7 +100,16 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
     // Tải xuống từng phần của tệp từ các peer
     let isUpdating = false;
 
-    for (let pieceIndex = 0; pieceIndex < pieces.length; pieceIndex++) {
+    // Rarest first
+    const { data } = await axios.get(
+      `${process.env.API_URL}/piece/sort/${filename}`
+    );
+    const sortedPieces: Piece[] = data;
+    const sortedPieceIndex: number[] = sortedPieces.map((p: Piece) => p.index);
+
+    for (let idx = 0; idx < pieces.length; idx++) {
+      const pieceIndex = sortedPieceIndex[idx];
+      //console.log(`Downloading piece #${pieceIndex}...`);
       // Check if the piece has been downloaded
       const extractedFilename = path.basename(filename, path.extname(filename));
       const pieceFilePath = `${dir}/${extractedFilename}/piece_${pieceIndex}.bin`;
@@ -175,16 +184,13 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
     }
 
     for (let i = 0; i < pieceFileDataList.length; i++) {
-      //console.log(`#${i} has size: ${pieceFileDataList[i].length}`);
       fs.appendFileSync(filePath, pieceFileDataList[i], { flag: "a" });
-
-      //saveFilePiece(filePath, i, pieceFileDataList[i]);
     }
     console.log(`File ${filename} has been downloaded successfully!`);
   } catch (err: any) {
     if (err.response) {
       console.error("Error:", err.response.data.message);
-    } 
+    }
   }
 };
 

@@ -15,5 +15,6 @@ router.get(
 );
 
 router.get('/sort/:filename', asyncHandler(PieceController.sortPieces));
+router.delete('/delete', asyncHandler(PieceController.deletePiecePeer));
 
 export default router;

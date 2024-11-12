@@ -33,7 +33,18 @@ export const createPeerServer = (peer: Peer) => {
             // Check if the piece of file exists
             if (!(await checkFileExists(pieceFilePath))) {
               console.log(`Piece ${filename}#${index} does not exist`);
-
+              // Delete the piece peer from the database
+              const deletePeerPiece = await axios.delete(
+                `${process.env.API_URL}/piece/delete`,
+                {
+                  data: {
+                    ip: peer.ip,
+                    port: peer.port,
+                    filename: filename,
+                    index: index,
+                  },
+                }
+              );
               socket.write("ERROR: Piece does not exist");
               return;
             }
@@ -77,7 +88,6 @@ export const createPeerServer = (peer: Peer) => {
         console.log("Failed to parse message:", data.toString());
       }
     });
-
   });
 
   server.listen(peer.port, () => {
