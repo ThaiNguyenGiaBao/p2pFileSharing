@@ -85,7 +85,15 @@ const handlePieceDownload = async () => {
   let peer = null;
   for (let i = 0; i < peers.length && !isSuccess; i++) {
     // Chọn một peer ngẫu nhiên để tải xuống
-    peer = peers[(pieceIndex + i) % peers.length];
+    //peer = peers[(pieceIndex + i) % peers.length];
+
+    peer = peers[i]; 
+    //#1: [3001, 3002 ,3003,3005]
+    //#2: [3001, 3002 ,3003]
+    //#3: [3001, 3002 ,3003]
+    //#4: [3001, 3002 ,3003]
+
+
 
     //console.log(peer);
     if (peer.port === myPeer.port && peer.ip === myPeer.ip) {

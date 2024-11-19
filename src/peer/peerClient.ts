@@ -69,7 +69,7 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
       fs.writeFileSync(filePath, ""); // Tạo tệp trống
     }
 
-    // Yêu cầu danh sách các peer có tệp
+    // Lấy torrent file từ tracker bằng filename
     const torrentFileResponse = await axios.get(
       `${process.env.API_URL}/torrentfile/${filename}`
     );

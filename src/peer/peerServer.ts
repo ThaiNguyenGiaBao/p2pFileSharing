@@ -8,6 +8,7 @@ import { checkFileExists } from "./fileService";
 // Hàm tạo server peer
 export const createPeerServer = (peer: Peer) => {
   const server = net.createServer((socket: net.Socket) => {
+    // Concurrency not parrallel
     socket.on("data", async (data: Buffer) => {
       try {
         const message = JSON.parse(data.toString().trim());

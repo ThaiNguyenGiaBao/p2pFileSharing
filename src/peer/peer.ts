@@ -49,9 +49,9 @@ rl.on("line", async (input) => {
     case "help": {
       console.log("Commands:");
       console.log(
-        "+ register_file <filePath> <fileName>: Register file with tracker"
+        "+ register_file <fileName>: Register file with tracker"
       );
-      console.log("+ download_file <port> <fileName>: Download file from peer");
+      console.log("+ download_file <fileName>: Download file from peer");
       console.log("+ list_files: List all files");
       console.log("+ me: Show peer information");
       console.log("+ exit");
@@ -91,17 +91,6 @@ rl.on("line", async (input) => {
       break;
     }
 
-    // case 'createTorrentFile': {
-    //     if (inputs.length >= 4) {
-    //         const filePath = inputs[1];
-    //         const fileName = inputs[2];
-    //         const torrentPath = inputs[3];
-    //         createTorrentFile(filePath, fileName, trackerUrl, torrentPath);
-    //     } else {
-    //         console.log('Miss value');
-    //     }
-    //     break;
-    // }
     case "download_file": {
       if (inputs.length === 2) {
         const fileName = inputs[1];
