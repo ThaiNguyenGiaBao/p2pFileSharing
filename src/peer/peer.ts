@@ -11,7 +11,7 @@ import TrackerAPI from "./trackerAPI";
 import { getPrivateIP } from "./getIP";
 
 dotenv.config();
-const trackerUrl: string = process.env.TRACKER_URL ?? "http://localhost:8000";
+//const trackerUrl: string = process.env.TRACKER_URL ?? "http://localhost:8000";
 const rl = readline.createInterface({
   input: process.stdin,
   output: process.stdout,
