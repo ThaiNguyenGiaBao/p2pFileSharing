@@ -70,7 +70,7 @@ class PeerController {
     }
 
     try {
-      const peer = await pool.query("SELECT * FROM peer WHERE id = $1", [
+      const peer = await pool.query("SELECT * FROM peer p JOIN peerpiecer pe on pe.peerid = p.id join piece on hashpiece = hash JOIN torrentfile t on t.id = torrentid  WHERE p.id = $1 ", [
         peerId,
       ]);
       if (peer.rows.length == 0) {
@@ -78,7 +78,7 @@ class PeerController {
         return;
       }
 
-      res.status(200).json(peer.rows[0]);
+      res.status(200).json(peer.rows);
     } catch (err: any) {
       console.error(err);
       res.status(500).send(err.message);

@@ -67,14 +67,14 @@ class PeerController {
                 return;
             }
             try {
-                const peer = yield initDb_1.default.query("SELECT * FROM peer WHERE id = $1", [
+                const peer = yield initDb_1.default.query("SELECT * FROM peer p JOIN peerpiecer pe on pe.peerid = p.id join piece on hashpiece = hash JOIN torrentfile t on t.id = torrentid  WHERE p.id = $1 ", [
                     peerId,
                 ]);
                 if (peer.rows.length == 0) {
                     res.status(400).json({ message: "Peer not found" });
                     return;
                 }
-                res.status(200).json(peer.rows[0]);
+                res.status(200).json(peer.rows);
             }
             catch (err) {
                 console.error(err);
