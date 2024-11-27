@@ -93,11 +93,15 @@ rl.on("line", async (input) => {
     }
 
     case "download_file": {
-      if (inputs.length === 2) {
-        const fileName = inputs[1];
-        downloadFile(fileName, peer as Peer);
+      if (inputs.length >= 2) {
+        const fileNames = inputs.slice(1); // Extract file names from inputs
+        fileNames.forEach((fileName) => {
+          downloadFile(fileName, peer as Peer); // Call the download function for each file
+        });
       } else {
-        console.log("Invalid input: download_file <port> <fileName>");
+        console.log(
+          "Invalid input: download_file <fileName1> <fileName2> ... <fileNameN>"
+        );
       }
       break;
     }

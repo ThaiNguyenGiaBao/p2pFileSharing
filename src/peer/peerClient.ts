@@ -125,7 +125,7 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
         pieceFileDataList[pieceIndex] = pieceData;
         continue;
       }
-
+      
       const worker = new Worker("./src/peer/workerDownloadPiece.mjs", {
         workerData: {
           piece: pieces[pieceIndex],
@@ -133,6 +133,7 @@ const downloadFile = async (filename: string, myPeer: Peer) => {
           filename,
           filePath,
           pieceIndex,
+          
         },
       });
 

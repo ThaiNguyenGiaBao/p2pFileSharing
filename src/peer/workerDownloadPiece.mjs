@@ -20,7 +20,7 @@ export const saveFilePiece = async (filePath, index, piece) => {
 };
 
 // Hàm tải xuống một phần (piece) của tệp từ một peer
-const downloadPieceFromPeer = async (peer, pieceIndex, filename, filePath) => {
+const downloadPieceFromPeer = async (peer, pieceIndex, filename, hash) => {
   return new Promise((resolve) => {
     const client = net.createConnection(
       { port: peer.port, host: peer.ip },
@@ -39,7 +39,6 @@ const downloadPieceFromPeer = async (peer, pieceIndex, filename, filePath) => {
           const message = data.toString();
           // Lưu phần tải xuống vào tệp
           if (message.startsWith("ERROR:")) {
-            
             resolve({ data: null, isSuccess: false });
             client.end();
             return; // Thoát khỏi callback
@@ -85,15 +84,13 @@ const handlePieceDownload = async () => {
   let peer = null;
   for (let i = 0; i < peers.length && !isSuccess; i++) {
     // Chọn một peer ngẫu nhiên để tải xuống
-    //peer = peers[(pieceIndex + i) % peers.length];
+    peer = peers[(pieceIndex + i) % peers.length];
 
-    peer = peers[i]; 
+    //peer = peers[i];
     //#1: [3001, 3002 ,3003,3005]
     //#2: [3001, 3002 ,3003]
     //#3: [3001, 3002 ,3003]
     //#4: [3001, 3002 ,3003]
-
-
 
     //console.log(peer);
     if (peer.port === myPeer.port && peer.ip === myPeer.ip) {
@@ -103,13 +100,14 @@ const handlePieceDownload = async () => {
       peer,
       pieceIndex,
       filename,
-      filePath
+      filePath,
+      piece.hash
     )); // Sử dụng await để đảm bảo thứ tự
 
     if (!isSuccess) {
       continue; // Thử tải xuống từ peer tiếp theo nếu có lỗi
     }
-    
+
     await saveFilePiece(filePath, pieceIndex, data);
 
     try {
@@ -146,7 +144,6 @@ const handlePieceDownload = async () => {
         }
       });
   }
- 
 
   parentPort?.postMessage({
     data: data,
