@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
-var _a;
 Object.defineProperty(exports, "__esModule", { value: true });
 const readline_1 = __importDefault(require("readline"));
 const axios_1 = __importDefault(require("axios"));
@@ -22,7 +21,7 @@ const peerClient_1 = require("./peerClient");
 const trackerAPI_1 = __importDefault(require("./trackerAPI"));
 const getIP_1 = require("./getIP");
 dotenv_1.default.config();
-const trackerUrl = (_a = process.env.TRACKER_URL) !== null && _a !== void 0 ? _a : "http://localhost:8000";
+//const trackerUrl: string = process.env.TRACKER_URL ?? "http://localhost:8000";
 const rl = readline_1.default.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -97,12 +96,14 @@ rl.on("line", (input) => __awaiter(void 0, void 0, void 0, function* () {
             break;
         }
         case "download_file": {
-            if (inputs.length === 2) {
-                const fileName = inputs[1];
-                (0, peerClient_1.downloadFile)(fileName, peer);
+            if (inputs.length >= 2) {
+                const fileNames = inputs.slice(1); // Extract file names from inputs
+                fileNames.forEach((fileName) => {
+                    (0, peerClient_1.downloadFile)(fileName, peer); // Call the download function for each file
+                });
             }
             else {
-                console.log("Invalid input: download_file <port> <fileName>");
+                console.log("Invalid input: download_file <fileName1> <fileName2> ... <fileNameN>");
             }
             break;
         }

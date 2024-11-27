@@ -12,9 +12,11 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const initDb_1 = __importDefault(require("./database/initDb"));
 const getIP_1 = require("../peer/getIP");
+const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 app.use(body_parser_1.default.json());
 app.use(body_parser_1.default.urlencoded({ extended: true }));
+app.use((0, cors_1.default)());
 const PORT = process.env.PORT_SERVER || 8000;
 const IP = (0, getIP_1.getPrivateIP)();
 // Connect to PostgreSQL
