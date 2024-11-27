@@ -63,16 +63,17 @@ class PeerController {
     res: Response,
     next: NextFunction
   ): Promise<void> {
-    // const peerId = req.params.peerId;
-    // if (!peerId) {
-    //   res.status(400).send("Add peerId");
-    //   return;
-    // }
+    const peerId = req.params.peerId;
+    if (!peerId) {
+      res.status(400).send("Add peerId");
+      return;
+    }
 
     try {
-      const peer = await pool.query("SELECT * FROM peer p JOIN peerpiecer pe on pe.peerid = p.id join piece on hashpiece = hash JOIN torrentfile t on t.id = torrentid ", [
-       
-      ]);
+      const peer = await pool.query(
+        "SELECT * FROM peer p JOIN peerpiecer pe on pe.peerid = p.id join piece on hashpiece = hash JOIN torrentfile t on t.id = torrentid  WHERE p.id = $1 ",
+        [peerId]
+      );
       if (peer.rows.length == 0) {
         res.status(400).json({ message: "Peer not found" });
         return;
