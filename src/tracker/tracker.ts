@@ -6,13 +6,14 @@ import PieceRouter from "./router/piece.router";
 import dotenv from "dotenv";
 dotenv.config();
 import pool from "./database/initDb";
+import { getPrivateIP } from "../peer/getIP";
 
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 const PORT = process.env.PORT_SERVER || 8000;
-
+const IP = getPrivateIP();
 // Connect to PostgreSQL
 pool
   .connect()
@@ -32,5 +33,5 @@ app.use("/api/peer", peerRouter);
 app.use("/api/piece", PieceRouter);
 
 app.listen(PORT, () => {
-  console.log("Server is running on http://localhost:" + PORT);
+  console.log("Server is running on http://" + IP + ":" + PORT);
 });

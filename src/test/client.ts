@@ -1,6 +1,6 @@
 import * as net from 'net';
 
-const HOST = '127.0.0.1'; // Replace with the server's IP address
+const HOST = '191.16.11.128'; // Replace with the server's IP address
 const PORT = 3000;
 
 // Connect to the server

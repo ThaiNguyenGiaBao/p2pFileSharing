@@ -1,6 +1,6 @@
 import os from "os";
 
-function getPrivateIP(): string {
+export function getPrivateIP(): string {
   const networkInterfaces = os.networkInterfaces();
 
   for (const interfaceName in networkInterfaces) {

@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 import { createPeerServer } from "./peerServer";
 import { downloadFile } from "./peerClient";
 import TrackerAPI from "./trackerAPI";
+import { getPrivateIP } from "./getIP";
 
 dotenv.config();
 const trackerUrl: string = process.env.TRACKER_URL ?? "http://localhost:8000";
@@ -16,11 +17,13 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
+const ip = getPrivateIP();
+
 let peer: any;
 async function startPeer() {
-  peer = await TrackerAPI.startPeer("localhost", parseInt(argv[2]));
+  peer = await TrackerAPI.startPeer(ip, parseInt(argv[2]));
   if (!peer) {
-    peer = await TrackerAPI.registerPeer("localhost", parseInt(argv[2]));
+    peer = await TrackerAPI.registerPeer(ip, parseInt(argv[2]));
   }
   if (peer) {
     console.log(
@@ -48,9 +51,7 @@ rl.on("line", async (input) => {
   switch (command) {
     case "help": {
       console.log("Commands:");
-      console.log(
-        "+ register_file <fileName>: Register file with tracker"
-      );
+      console.log("+ register_file <fileName>: Register file with tracker");
       console.log("+ download_file <fileName>: Download file from peer");
       console.log("+ list_files: List all files");
       console.log("+ me: Show peer information");
