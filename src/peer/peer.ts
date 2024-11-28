@@ -24,6 +24,7 @@ async function startPeer() {
   peer = await TrackerAPI.startPeer(ip, parseInt(argv[2]));
   if (!peer) {
     peer = await TrackerAPI.registerPeer(ip, parseInt(argv[2]));
+    await TrackerAPI.startPeer(ip, parseInt(argv[2]));
   }
   if (peer) {
     console.log(
