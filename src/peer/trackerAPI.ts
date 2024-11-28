@@ -74,7 +74,7 @@ class TrackerAPI {
 
             for (let i = 0; i < hashes.length; i++) {
               try {
-                await axios.post(`${process.env.API_URL}/piece/register`, {
+                 axios.post(`${process.env.API_URL}/piece/register`, {
                   hash: hashes[i],
                   torrentFileId: res.data.id,
                   size: sizes[i],

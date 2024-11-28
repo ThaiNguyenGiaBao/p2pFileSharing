@@ -33,7 +33,6 @@ function startPeer() {
         peer = yield trackerAPI_1.default.startPeer(ip, parseInt(process_1.argv[2]));
         if (!peer) {
             peer = yield trackerAPI_1.default.registerPeer(ip, parseInt(process_1.argv[2]));
-            yield trackerAPI_1.default.startPeer(ip, parseInt(process_1.argv[2]));
         }
         if (peer) {
             console.log("Peer ip: " +

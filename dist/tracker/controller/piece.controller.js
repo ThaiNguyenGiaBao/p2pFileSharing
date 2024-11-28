@@ -49,9 +49,9 @@ class PieceController {
                 // peerPiece already exists
                 const peerPiece1 = yield initDb_1.default.query("SELECT * FROM peerPieceR WHERE peerId = $1 AND hashPiece = $2", [peerId, hash]);
                 if (peerPiece1.rows.length != 0) {
-                    res.status(400).json({
-                        message: "Peer already registered this piece",
-                    });
+                    // res.status(400).json({
+                    //   message: "Peer already registered this piece",
+                    // });
                     return;
                 }
                 // Register the peerPiece

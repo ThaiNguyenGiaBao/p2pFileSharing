@@ -58,9 +58,9 @@ class PieceController {
       );
 
       if (peerPiece1.rows.length != 0) {
-        res.status(400).json({
-          message: "Peer already registered this piece",
-        });
+        // res.status(400).json({
+        //   message: "Peer already registered this piece",
+        // });
         return;
       }
 
