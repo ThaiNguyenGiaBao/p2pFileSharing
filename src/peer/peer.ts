@@ -24,6 +24,7 @@ async function startPeer() {
   peer = await TrackerAPI.startPeer(ip, parseInt(argv[2]));
   if (!peer) {
     peer = await TrackerAPI.registerPeer(ip, parseInt(argv[2]));
+    await TrackerAPI.startPeer(ip, parseInt(argv[2]))
   }
   if (peer) {
     console.log(
@@ -52,7 +53,9 @@ rl.on("line", async (input) => {
     case "help": {
       console.log("Commands:");
       console.log("+ register_file <fileName>: Register file with tracker");
-      console.log("+ download_file <fileName>: Download file from peer");
+      console.log(
+        "+ download_file download_file <fileName1> <fileName2> ... <fileNameN>: Download files from peer"
+      );
       console.log("+ list_files: List all files");
       console.log("+ me: Show peer information");
       console.log("+ exit");

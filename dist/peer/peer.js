@@ -33,6 +33,7 @@ function startPeer() {
         peer = yield trackerAPI_1.default.startPeer(ip, parseInt(process_1.argv[2]));
         if (!peer) {
             peer = yield trackerAPI_1.default.registerPeer(ip, parseInt(process_1.argv[2]));
+            yield trackerAPI_1.default.startPeer(ip, parseInt(process_1.argv[2]));
         }
         if (peer) {
             console.log("Peer ip: " +
@@ -60,7 +61,7 @@ rl.on("line", (input) => __awaiter(void 0, void 0, void 0, function* () {
         case "help": {
             console.log("Commands:");
             console.log("+ register_file <fileName>: Register file with tracker");
-            console.log("+ download_file <fileName>: Download file from peer");
+            console.log("+ download_file download_file <fileName1> <fileName2> ... <fileNameN>: Download files from peer");
             console.log("+ list_files: List all files");
             console.log("+ me: Show peer information");
             console.log("+ exit");
